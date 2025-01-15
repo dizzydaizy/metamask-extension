@@ -1,84 +1,91 @@
-import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import {
-  displayWarning,
-  setFeatureFlag,
-  showModal,
-  setShowFiatConversionOnTestnetsPreference,
-  setAutoLockTimeLimit,
-  setThreeBoxSyncingPermission,
-  turnThreeBoxSyncingOnAndInitialize,
-  setUseNonceField,
-  setIpfsGateway,
-  setLedgerLivePreference,
-  setDismissSeedBackUpReminder,
-} from '../../../store/actions';
+import { compose } from 'redux';
+import { DEFAULT_AUTO_LOCK_TIME_LIMIT } from '../../../../shared/constants/preferences';
 import { getPreferences } from '../../../selectors';
+import {
+  backupUserData,
+  setAutoLockTimeLimit,
+  setDismissSeedBackUpReminder,
+  setOverrideContentSecurityPolicyHeader,
+  setFeatureFlag,
+  setShowExtensionInFullSizeView,
+  setShowFiatConversionOnTestnetsPreference,
+  setShowTestNetworks,
+  setSmartTransactionsPreferenceEnabled,
+  setUseNonceField,
+  showModal,
+} from '../../../store/actions';
+import { getSmartTransactionsPreferenceEnabled } from '../../../../shared/modules/selectors';
+import {
+  displayErrorInSettings,
+  hideErrorInSettings,
+} from '../../../ducks/app/app';
 import AdvancedTab from './advanced-tab.component';
 
 export const mapStateToProps = (state) => {
   const {
-    appState: { warning },
+    appState: { errorInSettings },
     metamask,
   } = state;
   const {
-    featureFlags: { sendHexData, advancedInlineGas } = {},
-    threeBoxSyncingAllowed,
-    threeBoxDisabled,
+    featureFlags: { sendHexData } = {},
     useNonceField,
-    ipfsGateway,
-    useLedgerLive,
     dismissSeedBackUpReminder,
+    overrideContentSecurityPolicyHeader,
   } = metamask;
-  const { showFiatInTestnets, autoLockTimeLimit } = getPreferences(state);
+  const {
+    showFiatInTestnets,
+    showTestNetworks,
+    showExtensionInFullSizeView,
+    autoLockTimeLimit = DEFAULT_AUTO_LOCK_TIME_LIMIT,
+  } = getPreferences(state);
 
   return {
-    warning,
+    errorInSettings,
     sendHexData,
-    advancedInlineGas,
     showFiatInTestnets,
+    showTestNetworks,
+    showExtensionInFullSizeView,
+    smartTransactionsEnabled: getSmartTransactionsPreferenceEnabled(state),
     autoLockTimeLimit,
-    threeBoxSyncingAllowed,
-    threeBoxDisabled,
     useNonceField,
-    ipfsGateway,
-    useLedgerLive,
     dismissSeedBackUpReminder,
+    overrideContentSecurityPolicyHeader,
   };
 };
 
 export const mapDispatchToProps = (dispatch) => {
   return {
+    backupUserData: () => backupUserData(),
     setHexDataFeatureFlag: (shouldShow) =>
       dispatch(setFeatureFlag('sendHexData', shouldShow)),
-    displayWarning: (warning) => dispatch(displayWarning(warning)),
+    displayErrorInSettings: (errorInSettings) =>
+      dispatch(displayErrorInSettings(errorInSettings)),
+    hideErrorInSettings: () => dispatch(hideErrorInSettings()),
     showResetAccountConfirmationModal: () =>
       dispatch(showModal({ name: 'CONFIRM_RESET_ACCOUNT' })),
-    setAdvancedInlineGasFeatureFlag: (shouldShow) =>
-      dispatch(setFeatureFlag('advancedInlineGas', shouldShow)),
     setUseNonceField: (value) => dispatch(setUseNonceField(value)),
     setShowFiatConversionOnTestnetsPreference: (value) => {
       return dispatch(setShowFiatConversionOnTestnetsPreference(value));
     },
+    setShowTestNetworks: (value) => {
+      return dispatch(setShowTestNetworks(value));
+    },
+    setShowExtensionInFullSizeView: (value) => {
+      return dispatch(setShowExtensionInFullSizeView(value));
+    },
+    setSmartTransactionsEnabled: (value) => {
+      return dispatch(setSmartTransactionsPreferenceEnabled(value));
+    },
     setAutoLockTimeLimit: (value) => {
       return dispatch(setAutoLockTimeLimit(value));
     },
-    setThreeBoxSyncingPermission: (newThreeBoxSyncingState) => {
-      if (newThreeBoxSyncingState) {
-        dispatch(turnThreeBoxSyncingOnAndInitialize());
-      } else {
-        dispatch(setThreeBoxSyncingPermission(newThreeBoxSyncingState));
-      }
-    },
-    setIpfsGateway: (value) => {
-      return dispatch(setIpfsGateway(value));
-    },
-    setLedgerLivePreference: (value) => {
-      return dispatch(setLedgerLivePreference(value));
-    },
     setDismissSeedBackUpReminder: (value) => {
       return dispatch(setDismissSeedBackUpReminder(value));
+    },
+    setOverrideContentSecurityPolicyHeader: (value) => {
+      return dispatch(setOverrideContentSecurityPolicyHeader(value));
     },
   };
 };

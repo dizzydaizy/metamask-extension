@@ -1,13 +1,13 @@
-const fs = require('fs');
+#!/usr/bin/env node
+const fs = require('fs').promises;
 const path = require('path');
 
 const chalk = require('chalk');
-const pify = require('pify');
 
 const createStaticServer = require('./create-static-server');
 const { parsePort } = require('./lib/parse-port');
 
-const fsStat = pify(fs.stat);
+const fsStat = fs.stat;
 const DEFAULT_PORT = 9080;
 
 const onResponse = (request, response) => {
@@ -31,7 +31,7 @@ const onRequest = (request, response) => {
 };
 
 const startServer = ({ port, rootDirectory }) => {
-  const server = createStaticServer(rootDirectory);
+  const server = createStaticServer({ public: rootDirectory });
 
   server.on('request', onRequest);
 

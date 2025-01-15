@@ -1,179 +1,63 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { useDispatch, useSelector } from 'react-redux';
-import classnames from 'classnames';
-import { useHistory } from 'react-router-dom';
-
-import Identicon from '../../ui/identicon';
-import { I18nContext } from '../../../contexts/i18n';
-import {
-  SEND_ROUTE,
-  BUILD_QUOTE_ROUTE,
-} from '../../../helpers/constants/routes';
-import {
-  useMetricEvent,
-  useNewMetricEvent,
-} from '../../../hooks/useMetricEvent';
-import Tooltip from '../../ui/tooltip';
-import UserPreferencedCurrencyDisplay from '../user-preferenced-currency-display';
-import { PRIMARY, SECONDARY } from '../../../helpers/constants/common';
-import { showModal } from '../../../store/actions';
+import { useSelector } from 'react-redux';
+import { EthMethod } from '@metamask/keyring-api';
+import { isEqual } from 'lodash';
 import {
   isBalanceCached,
-  getSelectedAccount,
-  getShouldShowFiat,
-  getIsMainnet,
-  getIsTestnet,
-  getCurrentKeyring,
-  getSwapsDefaultToken,
   getIsSwapsChain,
-  getNativeCurrencyImage,
-} from '../../../selectors/selectors';
-import SwapIcon from '../../ui/icon/swap-icon.component';
-import BuyIcon from '../../ui/icon/overview-buy-icon.component';
-import SendIcon from '../../ui/icon/overview-send-icon.component';
-import { setSwapsFromToken } from '../../../ducks/swaps/swaps';
-import IconButton from '../../ui/icon-button';
-import WalletOverview from './wallet-overview';
+  getCurrentChainId,
+  getSelectedInternalAccount,
+  getSelectedAccountCachedBalance,
+  ///: BEGIN:ONLY_INCLUDE_IF(build-main,build-beta,build-flask)
+  getSwapsDefaultToken,
+  getIsBridgeChain,
+  ///: END:ONLY_INCLUDE_IF
+} from '../../../selectors';
+///: BEGIN:ONLY_INCLUDE_IF(build-main,build-beta,build-flask)
+import { getIsNativeTokenBuyable } from '../../../ducks/ramps';
+///: END:ONLY_INCLUDE_IF
+import { CoinOverview } from './coin-overview';
 
 const EthOverview = ({ className }) => {
-  const dispatch = useDispatch();
-  const t = useContext(I18nContext);
-  const sendEvent = useMetricEvent({
-    eventOpts: {
-      category: 'Navigation',
-      action: 'Home',
-      name: 'Clicked Send: Eth',
-    },
-  });
-  const depositEvent = useMetricEvent({
-    eventOpts: {
-      category: 'Navigation',
-      action: 'Home',
-      name: 'Clicked Deposit',
-    },
-  });
-  const history = useHistory();
-  const keyring = useSelector(getCurrentKeyring);
-  const usingHardwareWallet = keyring.type.search('Hardware') !== -1;
+  ///: BEGIN:ONLY_INCLUDE_IF(build-main,build-beta,build-flask)
+  const isBridgeChain = useSelector(getIsBridgeChain);
+  const isBuyableChain = useSelector(getIsNativeTokenBuyable);
+  // FIXME: This causes re-renders, so use isEqual to avoid this
+  const defaultSwapsToken = useSelector(getSwapsDefaultToken, isEqual);
+  ///: END:ONLY_INCLUDE_IF
   const balanceIsCached = useSelector(isBalanceCached);
-  const showFiat = useSelector(getShouldShowFiat);
-  const selectedAccount = useSelector(getSelectedAccount);
-  const { balance } = selectedAccount;
-  const isMainnetChain = useSelector(getIsMainnet);
-  const isTestnetChain = useSelector(getIsTestnet);
-  const isSwapsChain = useSelector(getIsSwapsChain);
-  const primaryTokenImage = useSelector(getNativeCurrencyImage);
+  const chainId = useSelector(getCurrentChainId);
+  const balance = useSelector(getSelectedAccountCachedBalance);
 
-  const enteredSwapsEvent = useNewMetricEvent({
-    event: 'Swaps Opened',
-    properties: { source: 'Main View', active_currency: 'ETH' },
-    category: 'swaps',
-  });
-  const defaultSwapsToken = useSelector(getSwapsDefaultToken);
+  // FIXME: This causes re-renders, so use isEqual to avoid this
+  const account = useSelector(getSelectedInternalAccount, isEqual);
+  const isSwapsChain = useSelector(getIsSwapsChain);
+  const isSigningEnabled =
+    account.methods.includes(EthMethod.SignTransaction) ||
+    account.methods.includes(EthMethod.SignUserOperation);
 
   return (
-    <WalletOverview
-      balance={
-        <Tooltip
-          position="top"
-          title={t('balanceOutdated')}
-          disabled={!balanceIsCached}
-        >
-          <div className="eth-overview__balance">
-            <div className="eth-overview__primary-container">
-              <UserPreferencedCurrencyDisplay
-                className={classnames('eth-overview__primary-balance', {
-                  'eth-overview__cached-balance': balanceIsCached,
-                })}
-                data-testid="eth-overview__primary-currency"
-                value={balance}
-                type={PRIMARY}
-                ethNumberOfDecimals={4}
-                hideTitle
-              />
-              {balanceIsCached ? (
-                <span className="eth-overview__cached-star">*</span>
-              ) : null}
-            </div>
-            {showFiat && (
-              <UserPreferencedCurrencyDisplay
-                className={classnames({
-                  'eth-overview__cached-secondary-balance': balanceIsCached,
-                  'eth-overview__secondary-balance': !balanceIsCached,
-                })}
-                data-testid="eth-overview__secondary-currency"
-                value={balance}
-                type={SECONDARY}
-                ethNumberOfDecimals={4}
-                hideTitle
-              />
-            )}
-          </div>
-        </Tooltip>
-      }
-      buttons={
-        <>
-          <IconButton
-            className="eth-overview__button"
-            Icon={BuyIcon}
-            disabled={!(isMainnetChain || isTestnetChain)}
-            label={t('buy')}
-            onClick={() => {
-              depositEvent();
-              dispatch(showModal({ name: 'DEPOSIT_ETHER' }));
-            }}
-          />
-          <IconButton
-            className="eth-overview__button"
-            data-testid="eth-overview-send"
-            Icon={SendIcon}
-            label={t('send')}
-            onClick={() => {
-              sendEvent();
-              history.push(SEND_ROUTE);
-            }}
-          />
-          <IconButton
-            className="eth-overview__button"
-            disabled={!isSwapsChain}
-            Icon={SwapIcon}
-            onClick={() => {
-              if (isSwapsChain) {
-                enteredSwapsEvent();
-                dispatch(setSwapsFromToken(defaultSwapsToken));
-                if (usingHardwareWallet) {
-                  global.platform.openExtensionInBrowser(BUILD_QUOTE_ROUTE);
-                } else {
-                  history.push(BUILD_QUOTE_ROUTE);
-                }
-              }
-            }}
-            label={t('swap')}
-            tooltipRender={(contents) => (
-              <Tooltip
-                title={t('onlyAvailableOnMainnet')}
-                position="bottom"
-                disabled={isSwapsChain}
-              >
-                {contents}
-              </Tooltip>
-            )}
-          />
-        </>
-      }
+    <CoinOverview
+      account={account}
+      balance={balance}
+      balanceIsCached={balanceIsCached}
       className={className}
-      icon={<Identicon diameter={32} image={primaryTokenImage} imageBorder />}
+      classPrefix="eth"
+      chainId={chainId}
+      isSigningEnabled={isSigningEnabled}
+      isSwapsChain={isSwapsChain}
+      ///: BEGIN:ONLY_INCLUDE_IF(build-main,build-beta,build-flask)
+      isBridgeChain={isBridgeChain}
+      isBuyableChain={isBuyableChain}
+      defaultSwapsToken={defaultSwapsToken}
+      ///: END:ONLY_INCLUDE_IF
     />
   );
 };
 
 EthOverview.propTypes = {
   className: PropTypes.string,
-};
-
-EthOverview.defaultProps = {
-  className: undefined,
 };
 
 export default EthOverview;

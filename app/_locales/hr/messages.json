@@ -1,12 +1,12 @@
 {
+  "QRHardwareSignRequestCancel": {
+    "message": "Odbaci"
+  },
+  "QRHardwareWalletImporterTitle": {
+    "message": "Skeniraj kôd QR"
+  },
   "about": {
     "message": "O opcijama"
-  },
-  "aboutSettingsDescription": {
-    "message": "Inačica, centar za podršku i informacije za kontakt"
-  },
-  "acceleratingATransaction": {
-    "message": "* Ubrzavanjem se transakcije pomoću veće cijene goriva povećava šansa za bržu obradu mrežom, ali se uvijek ne jamči."
   },
   "accessingYourCamera": {
     "message": "Pristupanje vašoj kameri..."
@@ -38,32 +38,14 @@
   "addNetwork": {
     "message": "Dodaj mrežu"
   },
-  "addRecipient": {
-    "message": "Dodaj primatelja"
-  },
   "addSuggestedTokens": {
     "message": "Dodaj predložene tokene"
-  },
-  "addToAddressBook": {
-    "message": "Dodaj u imenik"
-  },
-  "addToAddressBookModalPlaceholder": {
-    "message": "npr. Ivan M."
   },
   "addToken": {
     "message": "Dodaj token"
   },
-  "addTokens": {
-    "message": "Dodaj tokene"
-  },
   "advanced": {
     "message": "Napredno"
-  },
-  "advancedOptions": {
-    "message": "Napredne mogućnosti"
-  },
-  "advancedSettingsDescription": {
-    "message": "Pristup značajkama razvojnog inženjera, preuzimanje zapisnika stanja, poništavanje računa, postavljanje testnih mreža i prilagođeni RPC"
   },
   "amount": {
     "message": "Iznos"
@@ -76,6 +58,14 @@
     "message": "MetaMask",
     "description": "The name of the application"
   },
+  "appNameBeta": {
+    "message": "MetaMask Beta",
+    "description": "The name of the application (Beta)"
+  },
+  "appNameFlask": {
+    "message": "MetaMask Flask",
+    "description": "The name of the application (Flask)"
+  },
   "approve": {
     "message": "Odobri"
   },
@@ -84,15 +74,6 @@
   },
   "asset": {
     "message": "Imovina"
-  },
-  "attemptToCancel": {
-    "message": "Pokušati otkazati?"
-  },
-  "attemptToCancelDescription": {
-    "message": "Slanjem ovog pokušaja ne jamči se da će se vaša izvorna transakcija otkazati. Ako je pokušaj otkazivanja uspješan, naplaćuje vam se prethodno navedena naknada za prijenos."
-  },
-  "attemptingConnect": {
-    "message": "Pokušaj povezivanja na podatkovni blok."
   },
   "attributions": {
     "message": "Svojstva"
@@ -108,9 +89,6 @@
   },
   "back": {
     "message": "Natrag"
-  },
-  "backToAll": {
-    "message": "Natrag na sve"
   },
   "backupApprovalInfo": {
     "message": "Ovaj je sigurnosni kôd potreban za obnavljanje novčanika ako izgubite svoj uređaj, zaboravite svoju lozinku, morate ponovno instalirati MetaMask ili želite pristupiti svojem novčaniku na drugom uređaju."
@@ -137,26 +115,14 @@
     "message": "Prikaži račun u $1",
     "description": "$1 replaced by URL for custom block explorer"
   },
-  "blockiesIdenticon": {
-    "message": "Upotrijebi identifikaciju blokovima"
-  },
   "browserNotSupported": {
     "message": "Vaš se preglednik ne podržava..."
-  },
-  "buyWithWyre": {
-    "message": "Kupi ETH Wyerom"
-  },
-  "buyWithWyreDescription": {
-    "message": "Wyreom vam se omogućava korištenje kreditnom karticom za polaganje ETH-a izravno na vaš račun za MetaMask."
   },
   "bytes": {
     "message": "Bajtovi"
   },
   "cancel": {
     "message": "Odustani"
-  },
-  "cancellationGasFee": {
-    "message": "Otkazivanje naknade za gorivo"
   },
   "cancelled": {
     "message": "Otkazano"
@@ -167,9 +133,6 @@
   "chromeRequiredForHardwareWallets": {
     "message": "Trebate upotrebljavati MetaMask u pregledniku Google Chrome kako biste ga povezali s vašim hardverskim novčanikom."
   },
-  "clickToRevealSeed": {
-    "message": "Ovdje kliknite za otkrivanje tajnih riječi"
-  },
   "close": {
     "message": "Zatvori"
   },
@@ -179,20 +142,11 @@
   "confirmPassword": {
     "message": "Potvrdi lozinku"
   },
-  "confirmSecretBackupPhrase": {
-    "message": "Potvrdite svoju alternativnu tajnu rečenicu"
-  },
   "confirmed": {
     "message": "Potvrđeno"
   },
-  "congratulations": {
-    "message": "Čestitke"
-  },
   "connect": {
     "message": "Povežite se"
-  },
-  "connectHardwareWallet": {
-    "message": "Poveži hardverski novčanik"
   },
   "connectingTo": {
     "message": "Povezivanje na $1"
@@ -200,20 +154,11 @@
   "connectingToGoerli": {
     "message": "Povezivanje na testnu mrežu Goerli"
   },
-  "connectingToKovan": {
-    "message": "Povezivanje na testnu mrežu Kovan"
+  "connectingToLineaGoerli": {
+    "message": "Povezivanje na testnu mrežu Linea Goerli"
   },
   "connectingToMainnet": {
     "message": "Povezivanje na glavnu mrežu Ethereum"
-  },
-  "connectingToRinkeby": {
-    "message": "Povezivanje na testnu mrežu Rinkeby"
-  },
-  "connectingToRopsten": {
-    "message": "Povezivanje na testnu mrežu Ropsten"
-  },
-  "continueToWyre": {
-    "message": "Nastavi na uslugu Wyre"
   },
   "contractDeployment": {
     "message": "Primjena ugovora"
@@ -224,14 +169,8 @@
   "copiedExclamation": {
     "message": "Kopirano!"
   },
-  "copiedTransactionId": {
-    "message": "Kopirana identifikacijska oznaka transakcije"
-  },
   "copyAddress": {
     "message": "Kopiraj adresu u međuspremnik"
-  },
-  "copyPrivateKey": {
-    "message": "Ovo je vaš privatni ključ (kliknite za kopiranje)"
   },
   "copyToClipboard": {
     "message": "Kopiraj u međuspremnik"
@@ -242,12 +181,6 @@
   "create": {
     "message": "Stvori"
   },
-  "createAWallet": {
-    "message": "Stvori novčanik"
-  },
-  "createAccount": {
-    "message": "Stvori račun"
-  },
   "createPassword": {
     "message": "Stvori lozinku"
   },
@@ -257,14 +190,8 @@
   "currentLanguage": {
     "message": "Trenutačni jezik"
   },
-  "customGas": {
-    "message": "Prilagodi gorivo"
-  },
-  "customGasSubTitle": {
-    "message": "Povećavanjem se naknade može smanjiti vrijeme obrade, ali se ne jamči."
-  },
-  "customRPC": {
-    "message": "Prilagođeni RPC"
+  "custom": {
+    "message": "Napredno"
   },
   "customToken": {
     "message": "Prilagođeni token"
@@ -275,41 +202,17 @@
   "decimalsMustZerotoTen": {
     "message": "Decimalni brojevni ne smiju biti 0 i ne smiju prekoračivati 36."
   },
-  "defaultNetwork": {
-    "message": "Zadana je mreža za transakcije Ether glavna mreža."
-  },
   "delete": {
     "message": "Izbriši"
   },
-  "deleteAccount": {
-    "message": "Izbriši račun"
-  },
-  "deleteNetwork": {
-    "message": "Izbrisati mrežu?"
-  },
-  "deleteNetworkDescription": {
-    "message": "Sigurno želite izbrisati ovu mrežu?"
-  },
-  "depositEther": {
-    "message": "Položi Ether"
-  },
   "details": {
     "message": "Detalji"
-  },
-  "directDepositEther": {
-    "message": "Izravan polog Ether"
-  },
-  "directDepositEtherExplainer": {
-    "message": "Ako imate nešto Ethera, najbrži je način prebacivanja Ethera u vaš novi novčanik izravan polog."
   },
   "done": {
     "message": "Gotovo"
   },
   "downloadGoogleChrome": {
     "message": "Preuzmi preglednik Google Chrome"
-  },
-  "downloadSecretBackup": {
-    "message": "Preuzmite alternativnu sigurnosnu rečenicu i pohranite je na sigurnom mjestu na vanjskom šifriranom tvrdom disku ili mediju za pohranu."
   },
   "downloadStateLogs": {
     "message": "Preuzmi zapisnike stanja"
@@ -323,50 +226,8 @@
   "editContact": {
     "message": "Uredi kontakt"
   },
-  "endOfFlowMessage1": {
-    "message": "Prošli ste test – čuvajte svoju početnu rečenicu jer ste vi odgovorni za nju!"
-  },
-  "endOfFlowMessage10": {
-    "message": "Sve završeno"
-  },
-  "endOfFlowMessage2": {
-    "message": "Savjeti za njezino sigurno čuvanje"
-  },
-  "endOfFlowMessage3": {
-    "message": "Spremite sigurnosnu kopiju na više mjesta."
-  },
-  "endOfFlowMessage4": {
-    "message": "Nikada ne dijelite rečenicu ni s kim."
-  },
-  "endOfFlowMessage5": {
-    "message": "Pazite na krađu identiteta! Na usluzi MetaMask nikada vas se neće pitati početna rečenica."
-  },
-  "endOfFlowMessage6": {
-    "message": "Ako trebate ponovno sigurnosno kopirati svoju početnu rečenicu, možete je pronaći unutar stavke Postavke --> Sigurnost."
-  },
-  "endOfFlowMessage8": {
-    "message": "Osoblje MetaMask ne može obnoviti vašu početnu rečenicu. Saznajte više."
-  },
-  "endOfFlowMessage9": {
-    "message": "Saznajte više."
-  },
-  "ensNotFoundOnCurrentNetwork": {
-    "message": "Naziv ENS nije pronađen na trenutačnoj mreži. Pokušajte prebaciti na glavnu mrežu Ethereum."
-  },
-  "ensRegistrationError": {
-    "message": "Greška u registraciji naziva ENS"
-  },
-  "enterAnAlias": {
-    "message": "Upiši pseudonim"
-  },
-  "enterPassword": {
-    "message": "Upiši lozinku"
-  },
   "enterPasswordContinue": {
     "message": "Upišite lozinku za nastavak"
-  },
-  "estimatedProcessingTimes": {
-    "message": "Procijenjeno vrijeme obrade"
   },
   "ethereumPublicAddress": {
     "message": "Javna adresa Ethereum"
@@ -376,9 +237,6 @@
   },
   "expandView": {
     "message": "Proširi prikaz"
-  },
-  "exportPrivateKey": {
-    "message": "Izvezi privatni ključ"
   },
   "failed": {
     "message": "Neuspješno"
@@ -423,24 +281,8 @@
   "general": {
     "message": "Opće"
   },
-  "generalSettingsDescription": {
-    "message": "Konverzija valuta, glavna valuta, jezik, blockies identicon"
-  },
-  "getEther": {
-    "message": "Dohvati Ether"
-  },
-  "getEtherFromFaucet": {
-    "message": "Dohvati Ether iz svežnja za $1",
-    "description": "Displays network name for Ether faucet"
-  },
-  "getStarted": {
-    "message": "Početak upotrebe"
-  },
   "goerli": {
     "message": "Testna mreža Goerli"
-  },
-  "happyToSeeYou": {
-    "message": "Sretni smo što ste tu."
   },
   "hardware": {
     "message": "hardver"
@@ -480,12 +322,6 @@
   "importAccountMsg": {
     "message": "Uvezeni se računi ne pridružuju vašoj izvorno stvorenoj početnoj rečenici za MetaMask. Saznajte više o uvezenim računima"
   },
-  "importAccountSeedPhrase": {
-    "message": "Uvezi račun početnom rečenicom"
-  },
-  "importWallet": {
-    "message": "Uvezi novčanik"
-  },
   "imported": {
     "message": "Uvezeno",
     "description": "status showing that an account has been fully loaded into the keyring"
@@ -508,12 +344,6 @@
   "invalidAddressRecipient": {
     "message": "Adresa primatelja nije valjana"
   },
-  "invalidAddressRecipientNotEthNetwork": {
-    "message": "Ne mreža ETH, postavite na mala slova"
-  },
-  "invalidBlockExplorerURL": {
-    "message": "Nevaljani URL Block Explorer-a"
-  },
   "invalidRPC": {
     "message": "Nevaljani URL RPC-a"
   },
@@ -527,20 +357,20 @@
   "knownAddressRecipient": {
     "message": "Poznata ugovorna adresa."
   },
-  "kovan": {
-    "message": "Testna mreža Kovan"
-  },
   "learnMore": {
+    "message": "Saznajte više"
+  },
+  "learnMoreUpperCase": {
     "message": "Saznajte više"
   },
   "ledgerAccountRestriction": {
     "message": "Treba se koristiti zadnjim računom kako biste dodali novi račun."
   },
-  "letsGoSetUp": {
-    "message": "Da, obavimo postavljanje!"
-  },
-  "likeToAddTokens": {
+  "likeToImportTokens": {
     "message": "Želite li dodati ove tokene?"
+  },
+  "lineaGoerli": {
+    "message": "Testna mreža Linea Goerli"
   },
   "links": {
     "message": "Poveznice"
@@ -566,29 +396,14 @@
   "memo": {
     "message": "podsjetnik"
   },
-  "memorizePhrase": {
-    "message": "Zapamtite ovu rečenicu."
-  },
   "message": {
     "message": "Poruka"
-  },
-  "metamaskDescription": {
-    "message": "Povezujete se na Ethereum i decentralizirani internet."
   },
   "metamaskVersion": {
     "message": "Inačica usluge MetaMask"
   },
-  "mobileSyncText": {
-    "message": "Upišite svoju lozinku kako biste potvrdili da ste to vi!"
-  },
   "mustSelectOne": {
     "message": "Mora se odabrati barem jedan token."
-  },
-  "myAccounts": {
-    "message": "Moji računi"
-  },
-  "needEtherInWallet": {
-    "message": "Trebate Ether u svojem novčaniku kako biste ostvarili interakciju s decentraliziranim aplikacijama uporabom usluge MetaMask. "
   },
   "needImportFile": {
     "message": "Morate odabrati datoteku za uvoz.",
@@ -600,9 +415,6 @@
   "networkName": {
     "message": "Naziv mreže"
   },
-  "networkSettingsDescription": {
-    "message": "Dodaj i uredi prilagođene mreže RPC"
-  },
   "networks": {
     "message": "Mreže"
   },
@@ -611,9 +423,6 @@
   },
   "newAccount": {
     "message": "Novi račun"
-  },
-  "newAccountDetectedDialogMessage": {
-    "message": "Nova je adresa otkrivena! Ovdje kliknite za njezino dodavanje u vaš imenik."
   },
   "newAccountNumberName": {
     "message": "Račun $1",
@@ -625,29 +434,11 @@
   "newContract": {
     "message": "Novi ugovor"
   },
-  "newNetwork": {
-    "message": "Nova mreža"
-  },
   "newPassword": {
     "message": "Nova lozinka (najmanje osam znakova)"
   },
-  "newToMetaMask": {
-    "message": "Novi korisnik usluge MetaMask?"
-  },
-  "newTotal": {
-    "message": "Novi ukupni zbroj"
-  },
-  "newTransactionFee": {
-    "message": "Nova naknada za transakciju"
-  },
   "next": {
     "message": "Sljedeće"
-  },
-  "noAddressForName": {
-    "message": "Nijedna adresa nije postavljena za ovaj naziv."
-  },
-  "noAlreadyHaveSeed": {
-    "message": "Ne, već imam početnu fazu"
   },
   "noConversionRateAvailable": {
     "message": "Nijedan konverzijski tečaj nije dostupan"
@@ -675,12 +466,6 @@
   },
   "on": {
     "message": "Uključi"
-  },
-  "optionalBlockExplorerUrl": {
-    "message": "Blokiraj Explorerov URL (neobavezno)"
-  },
-  "optionalCurrencySymbol": {
-    "message": "Simbol (neobavezno)"
   },
   "origin": {
     "message": "Podrijetlo"
@@ -716,12 +501,6 @@
   "prev": {
     "message": "Prethodno"
   },
-  "primaryCurrencySetting": {
-    "message": "Glavna valuta"
-  },
-  "primaryCurrencySettingDescription": {
-    "message": "Odaberite da se prvo prikazuju valute u osnovnoj valuti bloka (npr. ETH). Odaberite mogućnost Fiat za prikazivanje valuta u odabranoj valuti Fiat."
-  },
   "privacyMsg": {
     "message": "Pravilnik o zaštiti privatnosti"
   },
@@ -735,17 +514,8 @@
   "privateNetwork": {
     "message": "Privatna mreža"
   },
-  "queue": {
-    "message": "Red čekanja"
-  },
   "readdToken": {
     "message": "Ovaj token možete dodati kasnije odlaskom pod stavku „Dodaj token” u izborniku mogućnosti računa. "
-  },
-  "recents": {
-    "message": "Nedavno"
-  },
-  "recipientAddressPlaceholder": {
-    "message": "Pretraži, javne adrese (0x) ili ENS"
   },
   "reject": {
     "message": "Odbaci"
@@ -761,9 +531,6 @@
   },
   "rejected": {
     "message": "Odbačeno"
-  },
-  "remindMeLater": {
-    "message": "Podsjeti me kasnije"
   },
   "remove": {
     "message": "Ukloni"
@@ -783,47 +550,21 @@
   "reset": {
     "message": "Ponovno postavi"
   },
-  "resetAccount": {
-    "message": "Poništi račun"
-  },
-  "resetAccountDescription": {
-    "message": "Poništavanjem se računa uklanja vaša povijest transakcija."
-  },
   "restore": {
     "message": "Vrati"
-  },
-  "restoreAccountWithSeed": {
-    "message": "Obnovite svoj račun početnom rečenicom"
   },
   "revealSeedWords": {
     "message": "Otkrij početne riječi"
   },
-  "revealSeedWordsDescription": {
-    "message": "Ako ikada promijenite preglednike ili računala, trebate ovu početnu rečenicu za pristupanje svojim računima. Spremite ih negdje na sigurno i tajno mjesto."
-  },
-  "revealSeedWordsTitle": {
-    "message": "Početna rečenica"
-  },
   "revealSeedWordsWarning": {
-    "message": "Ove se riječi mogu upotrijebiti za krađu vaših računa."
-  },
-  "revealSeedWordsWarningTitle": {
-    "message": "NE DIJELITE ovu rečenicu ni s kim!"
-  },
-  "rinkeby": {
-    "message": "Testna mreža Rinkeby"
-  },
-  "ropsten": {
-    "message": "Testna mreža Ropsten"
+    "message": "Ove se riječi mogu upotrijebiti za krađu vaših računa.",
+    "description": "$1 is bolded text using the message from 'revealSeedWordsWarning2'"
   },
   "rpcUrl": {
     "message": "Novi URL RPC-a"
   },
   "save": {
     "message": "Spremi"
-  },
-  "saveAsCsvFile": {
-    "message": "Spremi kao datoteku CSV"
   },
   "scanInstructions": {
     "message": "Postavite kôd QR ispred kamere"
@@ -834,44 +575,14 @@
   "search": {
     "message": "Traži"
   },
-  "searchResults": {
-    "message": "Rezultati pretraživanja"
-  },
-  "searchTokens": {
-    "message": "Pretraži tokene"
-  },
-  "secretBackupPhrase": {
-    "message": "Alternativna tajna rečenica"
-  },
-  "secretBackupPhraseDescription": {
-    "message": "Vašom se alternativnom tajnom rečenicom jednostavno sigurnosno kopira i obnavlja vaš račun."
-  },
-  "secretBackupPhraseWarning": {
-    "message": "UPOZORENJE: nikada ne otkrivajte svoju alternativnu rečenicu. Bilo tko ovom rečenicom može zauvijek preuzeti vaš Ether."
-  },
   "securityAndPrivacy": {
     "message": "Sigurnost i privatnost"
-  },
-  "securitySettingsDescription": {
-    "message": "Postavke privatnosti i početna rečenica novčanika"
-  },
-  "seedPhrasePlaceholder": {
-    "message": "Odvojite pojedinačne riječi jednim razmakom"
   },
   "seedPhraseReq": {
     "message": "Početne rečenice imaju 12 riječi"
   },
-  "selectAHigherGasFee": {
-    "message": "Odaberite višu naknadu za gorivo kako biste ubrzali obrađivanje vaše transakcije.*"
-  },
   "selectAnAccount": {
     "message": "Odaberi račun"
-  },
-  "selectAnAccountHelp": {
-    "message": "Odaberi račun za prikaz u usluzi MetaMask"
-  },
-  "selectEachPhrase": {
-    "message": "Odaberite svaku rečenicu kako biste provjerili je li točna."
   },
   "selectHdPath": {
     "message": "Odaberi put HD-a"
@@ -885,26 +596,8 @@
   "send": {
     "message": "Pošalji"
   },
-  "sendAmount": {
-    "message": "Odaberi iznos"
-  },
-  "sendTokens": {
-    "message": "Pošalji tokene"
-  },
-  "sentEther": {
-    "message": "pošalji ether"
-  },
-  "separateEachWord": {
-    "message": "Odvojite pojedinačne riječi jednim razmakom"
-  },
   "settings": {
     "message": "Postavke"
-  },
-  "showAdvancedGasInline": {
-    "message": "Napredno upravljanje gorivom"
-  },
-  "showAdvancedGasInlineDescription": {
-    "message": "Odaberite ovu stavku za prikaz cijene goriva i izravno ograničite kontrole prilikom slanja i potvrđivanja zaslona."
   },
   "showFiatConversionInTestnets": {
     "message": "Prikaži konverziju na usluzi Testnets"
@@ -918,26 +611,17 @@
   "showHexDataDescription": {
     "message": "Odaberite ovu stavku za prikaz polja namijenjenog za podatke hex na zaslonu za slanje"
   },
-  "showPrivateKeys": {
-    "message": "Prikaži privatne ključe"
-  },
   "sigRequest": {
     "message": "Zahtjev za potpisom"
   },
   "sign": {
     "message": "Potpis"
   },
-  "signNotice": {
-    "message": "Potpisivanje ove poruke može\nimati opasne neželjene učinke. Samo potpisujte poruke\ns mrežnih mjesta u koja imate potpuno povjerenje kada je riječ o vašem cijelom računu.\nOvaj se opasni način uklanja u sljedećoj inačici."
-  },
   "signatureRequest": {
     "message": "Zahtjev za potpisom"
   },
   "signed": {
     "message": "Potpisano"
-  },
-  "slow": {
-    "message": "Sporo"
   },
   "somethingWentWrong": {
     "message": "Ups! Nešto je pošlo po zlu."
@@ -960,9 +644,6 @@
   "stateLogsDescription": {
     "message": "U zapisnicima se stanja nalaze javne adrese računa i poslane transakcije."
   },
-  "storePhrase": {
-    "message": "Spremite ovu rečenicu u upravitelj lozinkama poput aplikacije 1Password."
-  },
   "submitted": {
     "message": "Poslano"
   },
@@ -978,35 +659,8 @@
   "symbolBetweenZeroTwelve": {
     "message": "Simbol mora biti 11 znakova ili manje."
   },
-  "syncWithMobile": {
-    "message": "Sinkroniziraj s mobilnim telefonom"
-  },
-  "syncWithMobileBeCareful": {
-    "message": "Pazite da nitko ne gleda u vaš zaslon dok skenirate ovaj kôd"
-  },
-  "syncWithMobileComplete": {
-    "message": "Vaši su podatci uspješno sinkronizirani. Uživajte u mobilnoj aplikaciji MetaMask!"
-  },
-  "syncWithMobileDesc": {
-    "message": "Možete sinkronizirati svoje račune i informacije s vašim mobilnim telefonom. Otvorite mobilnu aplikaciju MetaMask, idite u stavku „Postavke” i dodirnite „Sinkroniziraj iz dodatka preglednika”"
-  },
-  "syncWithMobileDescNewUsers": {
-    "message": "Kad otvorite mobilnu aplikaciju MetaMask po prvi puta, pridržavajte se koraka koji se prikazuju na telefonu."
-  },
-  "syncWithMobileScanThisCode": {
-    "message": "Skenirajte ovaj kôd uporabom mobilne aplikacije MetaMask"
-  },
-  "syncWithMobileTitle": {
-    "message": "Sinkroniziraj s mobilnim telefonom"
-  },
   "terms": {
     "message": "Odredbe uporabe"
-  },
-  "testFaucet": {
-    "message": "Testni snop"
-  },
-  "thisWillCreate": {
-    "message": "Ovom se radnjom stvara novi novčanik i početna rečenica"
   },
   "tips": {
     "message": "Napojnice"
@@ -1068,21 +722,11 @@
   "transfer": {
     "message": "Prenesi"
   },
-  "transferBetweenAccounts": {
-    "message": "Prenesi između mojih računa"
-  },
   "transferFrom": {
     "message": "Prenesi od"
   },
-  "troubleTokenBalances": {
-    "message": "Imamo problema s učitavanjem raspoloživog stanja vaših tokena. Možete ih vidjeti",
-    "description": "Followed by a link (here) to view token balances"
-  },
   "tryAgain": {
     "message": "Pokušaj ponovo"
-  },
-  "typePassword": {
-    "message": "Upišite svoju lozinku MetaMask."
   },
   "unapproved": {
     "message": "Neodobreno"
@@ -1092,12 +736,6 @@
   },
   "unknown": {
     "message": "Nepoznato"
-  },
-  "unknownCameraError": {
-    "message": "Došlo je do greške prilikom pokušaja pristupanja vašoj kameri. Pokušajte ponovno..."
-  },
-  "unknownCameraErrorTitle": {
-    "message": "Ups! Nešto je pošlo po zlu..."
   },
   "unknownNetwork": {
     "message": "Nepoznata privatna mreža"
@@ -1111,9 +749,6 @@
   "unlockMessage": {
     "message": "Decentralizirani internet čeka"
   },
-  "updatedWithDate": {
-    "message": "Ažurirano $1"
-  },
   "urlErrorMsg": {
     "message": "URI-jevima se zahtijeva prikladan prefiks HTTP/HTTPS."
   },
@@ -1123,38 +758,14 @@
   "userName": {
     "message": "Korisničko ime"
   },
-  "viewAccount": {
-    "message": "Prikaz računa"
-  },
   "viewContact": {
     "message": "Prikaži kontakt"
-  },
-  "viewOnCustomBlockExplorer": {
-    "message": "Prikaži u $1"
-  },
-  "viewOnEtherscan": {
-    "message": "Prikaži na Etherscanu"
-  },
-  "viewinExplorer": {
-    "message": "Prikaži u Exploreru"
   },
   "visitWebSite": {
     "message": "Posjetite naše mrežno mjesto"
   },
-  "walletSeed": {
-    "message": "Početni novčanik"
-  },
-  "welcome": {
-    "message": "Dobro došli u uslugu MetaMask"
-  },
   "welcomeBack": {
     "message": "Dobro došli natrag!"
-  },
-  "writePhrase": {
-    "message": "Zapišite ovu rečenicu na komad papira i pohranite je na sigurnom mjestu. Ako je želite još bolje zaštititi, zapišite je na više komada papira, a zatim svaki komad pohranite na dva do tri drugačija mjesta."
-  },
-  "yesLetsTry": {
-    "message": "Da, isprobajmo"
   },
   "youNeedToAllowCameraAccess": {
     "message": "Trebate dopustiti pristupanje kameri za korištenje ovom funkcijom."

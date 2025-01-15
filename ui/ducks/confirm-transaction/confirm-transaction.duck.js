@@ -6,17 +6,20 @@ import {
 import { getNativeCurrency, getTokens } from '../metamask/metamask';
 
 import {
-  getValueFromWeiHex,
   getTransactionFee,
   getHexGasTotal,
   addFiat,
   addEth,
 } from '../../helpers/utils/confirm-tx.util';
 
-import { getTokenData, sumHexes } from '../../helpers/utils/transactions.util';
-
-import { conversionUtil } from '../../../shared/modules/conversion.utils';
+import {
+  getValueFromWeiHex,
+  hexToDecimal,
+  sumHexes,
+} from '../../../shared/modules/conversion.utils';
 import { getAveragePriceEstimateInHexWEI } from '../../selectors/custom-gas';
+import { isEqualCaseInsensitive } from '../../../shared/modules/string-utils';
+import { parseStandardTokenTransactionData } from '../../../shared/modules/transaction.utils';
 
 // Actions
 const createActionType = (action) => `metamask/confirm-transaction/${action}`;
@@ -31,6 +34,7 @@ const UPDATE_TRANSACTION_AMOUNTS = createActionType(
 const UPDATE_TRANSACTION_FEES = createActionType('UPDATE_TRANSACTION_FEES');
 const UPDATE_TRANSACTION_TOTALS = createActionType('UPDATE_TRANSACTION_TOTALS');
 const UPDATE_NONCE = createActionType('UPDATE_NONCE');
+const SET_MAX_VALUE_MODE = createActionType('SET_MAX_VALUE_MODE');
 
 // Initial state
 const initState = {
@@ -47,6 +51,7 @@ const initState = {
   hexTransactionFee: '',
   hexTransactionTotal: '',
   nonce: '',
+  maxValueMode: {},
 };
 
 // Reducer
@@ -90,11 +95,8 @@ export default function reducer(state = initState, action = {}) {
       };
     }
     case UPDATE_TRANSACTION_FEES: {
-      const {
-        fiatTransactionFee,
-        ethTransactionFee,
-        hexTransactionFee,
-      } = action.payload;
+      const { fiatTransactionFee, ethTransactionFee, hexTransactionFee } =
+        action.payload;
       return {
         ...state,
         fiatTransactionFee: fiatTransactionFee || state.fiatTransactionFee,
@@ -103,11 +105,8 @@ export default function reducer(state = initState, action = {}) {
       };
     }
     case UPDATE_TRANSACTION_TOTALS: {
-      const {
-        fiatTransactionTotal,
-        ethTransactionTotal,
-        hexTransactionTotal,
-      } = action.payload;
+      const { fiatTransactionTotal, ethTransactionTotal, hexTransactionTotal } =
+        action.payload;
       return {
         ...state,
         fiatTransactionTotal:
@@ -122,7 +121,18 @@ export default function reducer(state = initState, action = {}) {
         nonce: action.payload,
       };
     case CLEAR_CONFIRM_TRANSACTION:
-      return initState;
+      return {
+        ...initState,
+        maxValueMode: state.maxValueMode,
+      };
+    case SET_MAX_VALUE_MODE:
+      return {
+        ...state,
+        maxValueMode: {
+          ...state.maxValueMode,
+          [action.payload.transactionId]: action.payload.enabled,
+        },
+      };
     default:
       return state;
   }
@@ -264,9 +274,8 @@ export function updateTxDataAndCalculate(txData) {
 export function setTransactionToConfirm(transactionId) {
   return (dispatch, getState) => {
     const state = getState();
-    const unconfirmedTransactionsHash = unconfirmedTransactionsHashSelector(
-      state,
-    );
+    const unconfirmedTransactionsHash =
+      unconfirmedTransactionsHashSelector(state);
     const transaction = unconfirmedTransactionsHash[transactionId];
 
     if (!transaction) {
@@ -281,10 +290,10 @@ export function setTransactionToConfirm(transactionId) {
       if (txParams.data) {
         const { to: tokenAddress, data } = txParams;
 
-        const tokenData = getTokenData(data);
+        const tokenData = parseStandardTokenTransactionData(data);
         const tokens = getTokens(state);
-        const currentToken = tokens?.find(
-          ({ address }) => tokenAddress === address,
+        const currentToken = tokens?.find(({ address }) =>
+          isEqualCaseInsensitive(tokenAddress, address),
         );
 
         dispatch(
@@ -297,10 +306,7 @@ export function setTransactionToConfirm(transactionId) {
       }
 
       if (txParams.nonce) {
-        const nonce = conversionUtil(txParams.nonce, {
-          fromNumericBase: 'hex',
-          toNumericBase: 'dec',
-        });
+        const nonce = hexToDecimal(txParams.nonce);
 
         dispatch(updateNonce(nonce));
       }
@@ -313,5 +319,15 @@ export function setTransactionToConfirm(transactionId) {
 export function clearConfirmTransaction() {
   return {
     type: CLEAR_CONFIRM_TRANSACTION,
+  };
+}
+
+export function setMaxValueMode(transactionId, enabled) {
+  return {
+    type: SET_MAX_VALUE_MODE,
+    payload: {
+      transactionId,
+      enabled,
+    },
   };
 }

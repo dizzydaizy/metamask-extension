@@ -1,11 +1,7 @@
+import { TransactionType } from '@metamask/transaction-controller';
+import { CHAIN_IDS } from '../../shared/constants/network';
+import { mockNetworkState } from '../../test/stub/networks';
 import {
-  KOVAN_CHAIN_ID,
-  KOVAN_NETWORK_ID,
-  MAINNET_CHAIN_ID,
-} from '../../shared/constants/network';
-import { TRANSACTION_TYPES } from '../../shared/constants/transaction';
-import {
-  unconfirmedTransactionsCountSelector,
   sendTokenTokenAmountAndToAddressSelector,
   contractExchangeRateSelector,
   conversionRateSelector,
@@ -21,37 +17,11 @@ const getEthersArrayLikeFromObj = (obj) => {
 };
 
 describe('Confirm Transaction Selector', () => {
-  describe('unconfirmedTransactionsCountSelector', () => {
-    const state = {
-      metamask: {
-        unapprovedTxs: {
-          1: {
-            metamaskNetworkId: KOVAN_NETWORK_ID,
-          },
-          2: {
-            chainId: MAINNET_CHAIN_ID,
-          },
-        },
-        unapprovedMsgCount: 1,
-        unapprovedPersonalMsgCount: 1,
-        unapprovedTypedMessagesCount: 1,
-        network: KOVAN_NETWORK_ID,
-        provider: {
-          chainId: KOVAN_CHAIN_ID,
-        },
-      },
-    };
-
-    it('returns number of txs in unapprovedTxs state with the same network plus unapproved signing method counts', () => {
-      expect(unconfirmedTransactionsCountSelector(state)).toStrictEqual(4);
-    });
-  });
-
   describe('sendTokenTokenAmountAndToAddressSelector', () => {
     const state = {
       confirmTransaction: {
         tokenData: {
-          name: TRANSACTION_TYPES.TOKEN_METHOD_TRANSFER,
+          name: TransactionType.tokenMethodTransfer,
           args: getEthersArrayLikeFromObj({
             _to: '0x0dcd5d886577d5081b0c52e242ef29e70be3e7bc',
             _value: { toString: () => '1' },
@@ -75,9 +45,12 @@ describe('Confirm Transaction Selector', () => {
   describe('contractExchangeRateSelector', () => {
     const state = {
       metamask: {
-        contractExchangeRates: {
-          '0xTokenAddress': '10',
+        marketData: {
+          '0x5': {
+            '0xTokenAddress': { price: '10' },
+          },
         },
+        ...mockNetworkState({ chainId: CHAIN_IDS.GOERLI }),
       },
       confirmTransaction: {
         txData: {
@@ -96,7 +69,14 @@ describe('Confirm Transaction Selector', () => {
   describe('conversionRateSelector', () => {
     it('returns conversionRate from state', () => {
       const state = {
-        metamask: { conversionRate: 556.12 },
+        metamask: {
+          currencyRates: {
+            ETH: {
+              conversionRate: 556.12,
+            },
+          },
+          ...mockNetworkState({ chainId: CHAIN_IDS.MAINNET }),
+        },
       };
       expect(conversionRateSelector(state)).toStrictEqual(556.12);
     });

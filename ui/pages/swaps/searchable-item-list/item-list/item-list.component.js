@@ -10,9 +10,12 @@ import { I18nContext } from '../../../../contexts/i18n';
 import {
   getCurrentChainId,
   getRpcPrefsForCurrentProvider,
+  getUseCurrencyRateCheck,
 } from '../../../../selectors';
-import { SWAPS_CHAINID_DEFAULT_BLOCK_EXPLORER_URL_MAP } from '../../../../../shared/constants/swaps';
-import { useNewMetricEvent } from '../../../../hooks/useMetricEvent';
+import { MetaMetricsEventCategory } from '../../../../../shared/constants/metametrics';
+import { CHAINID_DEFAULT_BLOCK_EXPLORER_URL_MAP } from '../../../../../shared/constants/common';
+import { getURLHostName } from '../../../../helpers/utils/util';
+import { MetaMetricsContext } from '../../../../contexts/metametrics';
 
 export default function ItemList({
   results = [],
@@ -32,47 +35,45 @@ export default function ItemList({
   const rpcPrefs = useSelector(getRpcPrefsForCurrentProvider);
   const blockExplorerLink =
     rpcPrefs.blockExplorerUrl ??
-    SWAPS_CHAINID_DEFAULT_BLOCK_EXPLORER_URL_MAP[chainId] ??
+    CHAINID_DEFAULT_BLOCK_EXPLORER_URL_MAP[chainId] ??
     null;
-
-  const blockExplorerLabel = rpcPrefs.blockExplorerUrl
-    ? new URL(blockExplorerLink).hostname
-    : t('etherscan');
-
-  const blockExplorerLinkClickedEvent = useNewMetricEvent({
-    category: 'Swaps',
-    event: 'Clicked Block Explorer Link',
-    properties: {
-      link_type: 'Token Tracker',
-      action: 'Verify Contract Address',
-      block_explorer_domain: blockExplorerLink
-        ? new URL(blockExplorerLink)?.hostname
-        : '',
-    },
-  });
+  const useCurrencyRateCheck = useSelector(getUseCurrencyRateCheck);
+  const blockExplorerHostName = getURLHostName(blockExplorerLink);
+  const trackEvent = useContext(MetaMetricsContext);
 
   // If there is a token for import based on a contract address, it's the only one in the list.
   const hasTokenForImport = results.length === 1 && results[0].notImported;
+  const placeholder = Placeholder ? (
+    <Placeholder searchQuery={searchQuery} />
+  ) : null;
   return results.length === 0 ? (
-    Placeholder && <Placeholder searchQuery={searchQuery} />
+    placeholder
   ) : (
     <div className="searchable-item-list">
-      {listTitle && (
+      {listTitle ? (
         <div className="searchable-item-list__title">{listTitle}</div>
-      )}
+      ) : null}
       <div
         className={classnames(
           'searchable-item-list__list-container',
           listContainerClassName,
         )}
         ref={containerRef}
+        data-testid="searchable-item-list-list-container"
       >
         {results.slice(0, maxListItems).map((result, i) => {
           if (hideItemIf?.(result)) {
             return null;
           }
+          const hasBalance = result.balance > 0;
+          if (result.blocked && !hasBalance && !searchQuery) {
+            return null;
+          }
 
           const onClick = () => {
+            if (result.blocked) {
+              return;
+            }
             if (result.notImported) {
               onOpenImportTokenModalClick(result);
             } else {
@@ -83,7 +84,7 @@ export default function ItemList({
             iconUrl,
             identiconAddress,
             selected,
-            disabled,
+            blocked,
             primaryLabel,
             secondaryLabel,
             rightPrimaryLabel,
@@ -95,83 +96,98 @@ export default function ItemList({
               tabIndex="0"
               className={classnames('searchable-item-list__item', {
                 'searchable-item-list__item--selected': selected,
-                'searchable-item-list__item--disabled': disabled,
+                'searchable-item-list__item--disabled': blocked,
               })}
+              data-testid="searchable-item-list__item"
               onClick={onClick}
               onKeyUp={(e) => e.key === 'Enter' && onClick()}
               key={`searchable-item-list-item-${i}`}
+              title={blocked ? t('swapTokenNotAvailable') : null}
             >
-              {(iconUrl || primaryLabel) && (
+              {iconUrl || primaryLabel ? (
                 <UrlIcon url={iconUrl} name={primaryLabel} />
-              )}
-              {!(iconUrl || primaryLabel) && identiconAddress && (
+              ) : null}
+              {!(iconUrl || primaryLabel) && identiconAddress ? (
                 <div className="searchable-item-list__identicon">
                   <Identicon address={identiconAddress} diameter={24} />
                 </div>
-              )}
-              {IconComponent && <IconComponent />}
+              ) : null}
+              {IconComponent ? <IconComponent /> : null}
               <div className="searchable-item-list__labels">
                 <div className="searchable-item-list__item-labels">
-                  {primaryLabel && (
-                    <span className="searchable-item-list__primary-label">
+                  {primaryLabel ? (
+                    <span
+                      className="searchable-item-list__primary-label"
+                      data-testid="searchable-item-list-primary-label"
+                    >
                       {primaryLabel}
                     </span>
-                  )}
-                  {secondaryLabel && (
+                  ) : null}
+                  {secondaryLabel ? (
                     <span className="searchable-item-list__secondary-label">
                       {secondaryLabel}
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 {!hideRightLabels &&
-                  (rightPrimaryLabel || rightSecondaryLabel) && (
-                    <div className="searchable-item-list__right-labels">
-                      {rightPrimaryLabel && (
-                        <span className="searchable-item-list__right-primary-label">
-                          {rightPrimaryLabel}
-                        </span>
-                      )}
-                      {rightSecondaryLabel && (
-                        <span className="searchable-item-list__right-secondary-label">
-                          {rightSecondaryLabel}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                (rightPrimaryLabel || rightSecondaryLabel) ? (
+                  <div className="searchable-item-list__right-labels">
+                    {rightPrimaryLabel ? (
+                      <span className="searchable-item-list__right-primary-label">
+                        {rightPrimaryLabel}
+                      </span>
+                    ) : null}
+                    {rightSecondaryLabel && useCurrencyRateCheck ? (
+                      <span className="searchable-item-list__right-secondary-label">
+                        {rightSecondaryLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
               {result.notImported && (
-                <Button type="confirm" onClick={onClick} rounded>
+                <Button
+                  type="primary"
+                  onClick={onClick}
+                  data-testid="searchable-item-list-import-button"
+                >
                   {t('import')}
                 </Button>
               )}
             </div>
           );
         })}
-        {!hasTokenForImport && (
+        {!hasTokenForImport && blockExplorerLink && (
           <div
             tabIndex="0"
             className="searchable-item-list__item searchable-item-list__item--add-token"
             key="searchable-item-list-item-last"
           >
             <ActionableMessage
-              message={
-                blockExplorerLink &&
-                t('addCustomTokenByContractAddress', [
-                  <a
-                    key="searchable-item-list__etherscan-link"
-                    onClick={() => {
-                      blockExplorerLinkClickedEvent();
-                      global.platform.openTab({
-                        url: blockExplorerLink,
-                      });
-                    }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {blockExplorerLabel}
-                  </a>,
-                ])
-              }
+              message={t('addTokenByContractAddress', [
+                <a
+                  key="searchable-item-list__etherscan-link"
+                  onClick={() => {
+                    /* istanbul ignore next */
+                    trackEvent({
+                      event: 'Clicked Block Explorer Link',
+                      category: MetaMetricsEventCategory.Swaps,
+                      properties: {
+                        link_type: 'Token Tracker',
+                        action: 'Verify Contract Address',
+                        block_explorer_domain: blockExplorerHostName,
+                      },
+                    });
+                    global.platform.openTab({
+                      url: blockExplorerLink,
+                    });
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {blockExplorerHostName}
+                </a>,
+              ])}
             />
           </div>
         )}
@@ -185,7 +201,7 @@ ItemList.propTypes = {
     PropTypes.shape({
       iconUrl: PropTypes.string,
       selected: PropTypes.bool,
-      disabled: PropTypes.bool,
+      blocked: PropTypes.bool,
       primaryLabel: PropTypes.string,
       secondaryLabel: PropTypes.string,
       rightPrimaryLabel: PropTypes.string,

@@ -1,22 +1,23 @@
 const pify = require('pify');
 const gulp = require('gulp');
-const autoprefixer = require('gulp-autoprefixer');
+const autoprefixer = require('autoprefixer');
 const gulpStylelint = require('gulp-stylelint');
 const watch = require('gulp-watch');
 const sourcemaps = require('gulp-sourcemaps');
-const rtlcss = require('gulp-rtlcss');
-const rename = require('gulp-rename');
-const pump = pify(require('pump'));
+const rtlcss = require('postcss-rtlcss');
+const postcss = require('gulp-postcss');
+const pipeline = pify(require('readable-stream').pipeline);
+const sass = require('sass-embedded');
+const gulpSass = require('gulp-sass')(sass);
+const { TASKS } = require('./constants');
 const { createTask } = require('./task');
-
-let sass;
 
 // scss compilation and autoprefixing tasks
 module.exports = createStyleTasks;
 
 function createStyleTasks({ livereload }) {
   const prod = createTask(
-    'styles:prod',
+    TASKS.STYLES_PROD,
     createScssBuildTask({
       src: 'ui/css/index.scss',
       dest: 'ui/css/output',
@@ -25,7 +26,7 @@ function createStyleTasks({ livereload }) {
   );
 
   const dev = createTask(
-    'styles:dev',
+    TASKS.STYLES_DEV,
     createScssBuildTask({
       src: 'ui/css/index.scss',
       dest: 'ui/css/output',
@@ -34,7 +35,7 @@ function createStyleTasks({ livereload }) {
     }),
   );
 
-  const lint = createTask('lint-scss', function () {
+  const lint = createTask(TASKS.LINT_SCSS, function () {
     return gulp.src('ui/css/itcss/**/*.scss').pipe(
       gulpStylelint({
         reporters: [{ formatter: 'string', console: true }],
@@ -57,32 +58,32 @@ function createStyleTasks({ livereload }) {
     };
 
     async function buildScss() {
-      await Promise.all([
-        buildScssPipeline(src, dest, devMode, false),
-        buildScssPipeline(src, dest, devMode, true),
-      ]);
+      await buildScssPipeline(src, dest, devMode);
     }
   }
 }
 
-async function buildScssPipeline(src, dest, devMode, rtl) {
-  if (!sass) {
-    // eslint-disable-next-line node/global-require
-    sass = require('gulp-dart-sass');
-    // use our own compiler which runs sass in its own process
-    // in order to not pollute the intrinsics
-    // eslint-disable-next-line node/global-require
-    sass.compiler = require('./sass-compiler.js');
-  }
-  await pump(
+async function buildScssPipeline(src, dest, devMode) {
+  await pipeline(
     ...[
       // pre-process
       gulp.src(src),
       devMode && sourcemaps.init(),
-      sass().on('error', sass.logError),
-      autoprefixer(),
-      rtl && rtlcss(),
-      rtl && rename({ suffix: '-rtl' }),
+      gulpSass({
+        // The order of includePaths is important; prefer our own
+        // folders over `node_modules`
+        includePaths: [
+          // enables shortcuts to `@use design-system`, `@use utilities`, etc.
+          'ui/css/',
+          'node_modules/',
+        ],
+        functions: {
+          // Tell sass where to find the font-awesome font files
+          // update this location in static.js if it changes
+          '-mm-fa-path()': () => new sass.SassString('./fonts/fontawesome'),
+        },
+      }).on('error', gulpSass.logError),
+      postcss([autoprefixer(), rtlcss()]),
       devMode && sourcemaps.write(),
       gulp.dest(dest),
     ].filter(Boolean),

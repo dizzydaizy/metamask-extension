@@ -9,6 +9,7 @@ module.exports = {
     '/node_modules',
     '/notices',
     '/test',
+    '/public',
   ],
 
   rules: {
@@ -73,7 +74,7 @@ module.exports = {
     'function-parentheses-newline-inside': 'always-multi-line',
     'function-parentheses-space-inside': 'never-single-line',
     'function-whitespace-after': 'always',
-    'indentation': 2,
+    indentation: 2,
     'length-zero-no-unit': true,
     // 'max-empty-lines': 1,
     'media-feature-colon-space-after': 'always',
@@ -121,6 +122,8 @@ module.exports = {
     // custom rules
 
     // 'color-named': 'never',
+    // This rule checks for the usage of hexadecimal color values and warns about it to encourage the use of Design Tokens https://github.com/MetaMask/design-tokens/
+    'color-no-hex': [true, { severity: 'warning' }],
     // 'font-family-name-quotes': 'always-where-recommended',
     // 'font-weight-notation': 'numeric',
     // 'function-url-quotes': 'always',

@@ -1,39 +1,41 @@
+@use "design-system";
+
 .searchable-item-list {
-  background: $white;
+  background: var(--color-background-default);
   width: 100%;
   position: relative;
 
   &__search {
     > div {
       border: none;
-      border-bottom: 1px solid $Grey-100;
+      border-bottom: 1px solid var(--color-border-muted);
       border-radius: 0;
       height: 55px;
       font-size: 12px;
 
       input {
-        @include H6;
+        @include design-system.H6;
 
-        color: $Grey-500;
+        color: var(--color-text-default);
         line-height: 100%;
 
         &::-webkit-input-placeholder {
-          color: $Grey-500;
+          color: var(--color-text-muted);
           opacity: 1;
         }
 
         &:-moz-placeholder {
-          color: $Grey-500;
+          color: var(--color-text-muted);
           opacity: 1;
         }
 
         &::-moz-placeholder {
-          color: $Grey-500;
+          color: var(--color-text-muted);
           opacity: 1;
         }
 
         &::placeholder {
-          color: $Grey-500;
+          color: var(--color-text-muted);
           opacity: 1;
         }
       }
@@ -54,7 +56,7 @@
     padding: 8px 12px;
     box-sizing: border-box;
     cursor: pointer;
-    border-top: 1px solid $Grey-100;
+    border-top: 1px solid var(--color-border-muted);
     position: relative;
     min-height: 50px;
 
@@ -68,16 +70,16 @@
 
     &:hover,
     &:focus {
-      background: $Grey-000;
+      background: var(--color-background-default-hover);
     }
 
     &--selected {
-      border: 1px solid $malibu-blue !important;
+      border: 1px solid var(--color-primary-default) !important;
     }
 
     &--disabled {
       opacity: 0.4;
-      pointer-events: none;
+      cursor: auto;
     }
 
     &--add-token {
@@ -94,19 +96,19 @@
 
         &__message {
           text-align: left;
-          color: $Black-100;
+          color: var(--color-text-default);
         }
 
         a {
           pointer-events: auto;
-          color: #037dd6;
+          color: var(--color-primary-default);
           cursor: pointer;
         }
       }
     }
 
     .btn-primary {
-      @include H7;
+      @include design-system.H7;
 
       width: auto;
       padding: 7px 11px;
@@ -123,7 +125,7 @@
     align-items: center;
     min-width: 0;
 
-    @include H6;
+    @include design-system.H6;
 
     line-height: 100%;
     font-weight: bold;
@@ -142,7 +144,6 @@
   &__labels {
     display: flex;
     justify-content: space-between;
-    max-width: 237px;
     flex: 1;
     -moz-animation: fadein 1s;
     -webkit-animation: fadein 1s;
@@ -167,10 +168,10 @@
 
   &__secondary-label,
   &__right-primary-label {
-    @include H7;
+    @include design-system.H7;
 
     line-height: 100%;
-    color: $Grey-500;
+    color: var(--color-text-alternative);
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
@@ -182,10 +183,10 @@
   }
 
   &__right-secondary-label {
-    @include H7;
+    @include design-system.H7;
 
     line-height: 100%;
-    color: $Grey-500;
+    color: var(--color-text-alternative);
     opacity: 0.5;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -194,7 +195,7 @@
 
   &__list-container {
     z-index: 1002;
-    background: white;
+    background: var(--color-background-default);
   }
 
   &__search {
@@ -202,7 +203,7 @@
   }
 
   &__item--highlighted {
-    background: $Grey-000;
+    background: var(--color-background-alternative);
   }
 
   &__identicon {

@@ -1,3 +1,5 @@
+@use "design-system";
+
 .transaction-list {
   display: flex;
   flex-direction: column;
@@ -10,14 +12,14 @@
   }
 
   &__header {
-    @include H6;
+    @include design-system.H6;
 
     flex: 0 0 auto;
-    color: $Grey-400;
-    border-bottom: 1px solid $Grey-100;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border-muted);
     padding: 8px 0 8px 20px;
 
-    @media screen and (max-width: $break-small) {
+    @include design-system.screen-sm-max {
       padding: 8px 0 8px 16px;
     }
   }
@@ -41,11 +43,18 @@
     grid-row-start: 2;
     display: flex;
     justify-content: center;
-    color: $silver;
+    color: var(--color-text-muted);
   }
 
   &__view-more {
     margin: 16px auto;
     max-width: 200px;
+  }
+
+  &__view-on-block-explorer {
+    grid-row-start: 2;
+    display: flex;
+    justify-content: center;
+    padding: 16px;
   }
 }

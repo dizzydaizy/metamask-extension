@@ -3,154 +3,98 @@ const fs = require('fs-extra');
 const watch = require('gulp-watch');
 const glob = require('fast-glob');
 
-const locales = require('../../app/_locales/index.json');
+const { loadBuildTypesConfig } = require('../lib/build-type');
 
+const { isManifestV3 } = require('../../shared/modules/mv3.utils');
+const { TASKS } = require('./constants');
 const { createTask, composeSeries } = require('./task');
+const { getPathInsideNodeModules } = require('./utils');
 
-module.exports = createStaticAssetTasks;
+const EMPTY_JS_FILE = './development/empty.js';
 
-const copyTargets = [
-  {
-    src: `./app/_locales/`,
-    dest: `_locales`,
-  },
-  {
-    src: `./app/images/`,
-    dest: `images`,
-  },
-  {
-    src: `./node_modules/@metamask/contract-metadata/images/`,
-    dest: `images/contract`,
-  },
-  {
-    src: `./app/fonts/`,
-    dest: `fonts`,
-  },
-  {
-    src: `./app/vendor/`,
-    dest: `vendor`,
-  },
-  {
-    src: `./node_modules/@fortawesome/fontawesome-free/webfonts/`,
-    dest: `fonts/fontawesome`,
-  },
-  {
-    src: `./ui/css/output/`,
-    pattern: `*.css`,
-    dest: ``,
-  },
-  {
-    src: `./app/`,
-    pattern: `*.html`,
-    dest: ``,
-  },
-  {
-    src: `./node_modules/globalthis/dist/browser.js`,
-    dest: `globalthis.js`,
-  },
-  {
-    src: `./node_modules/ses/dist/lockdown.cjs`,
-    dest: `lockdown.js`,
-  },
-  {
-    src: `./app/scripts/`,
-    pattern: `runLockdown.js`,
-    dest: ``,
-  },
-];
+module.exports = function createStaticAssetTasks({
+  livereload,
+  browserPlatforms,
+  shouldIncludeLockdown = true,
+  shouldIncludeSnow = true,
+  buildType,
+}) {
+  const copyTargetsProds = {};
+  const copyTargetsDevs = {};
 
-const languageTags = new Set();
-for (const locale of locales) {
-  const { code } = locale;
-  const tag = code.split('_')[0];
-  languageTags.add(tag);
-}
+  const buildConfig = loadBuildTypesConfig();
 
-for (const tag of languageTags) {
-  copyTargets.push({
-    src: `./node_modules/@formatjs/intl-relativetimeformat/dist/locale-data/${tag}.json`,
-    dest: `intl/${tag}/relative-time-format-data.json`,
+  const activeFeatures = buildConfig.buildTypes[buildType].features ?? [];
+
+  browserPlatforms.forEach((browser) => {
+    const [copyTargetsProd, copyTargetsDev] = getCopyTargets(
+      shouldIncludeLockdown,
+      shouldIncludeSnow,
+    );
+    copyTargetsProds[browser] = copyTargetsProd;
+    copyTargetsDevs[browser] = copyTargetsDev;
   });
-}
 
-const copyTargetsDev = [
-  ...copyTargets,
-  {
-    src: './development',
-    pattern: '/chromereload.js',
-    dest: ``,
-  },
-  // empty files to suppress missing file errors
-  {
-    src: './development/empty.js',
-    dest: `bg-libs.js`,
-  },
-  {
-    src: './development/empty.js',
-    dest: `ui-libs.js`,
-  },
-];
-
-const copyTargetsProd = [
-  ...copyTargets,
-  // empty files to suppress missing file errors
-  {
-    src: './development/empty.js',
-    dest: `chromereload.js`,
-  },
-];
-
-function createStaticAssetTasks({ livereload, browserPlatforms }) {
-  const prod = createTask(
-    'static:prod',
-    composeSeries(
-      ...copyTargetsProd.map((target) => {
-        return async function copyStaticAssets() {
-          await performCopy(target);
-        };
-      }),
-    ),
+  const additionalAssets = activeFeatures.flatMap(
+    (feature) =>
+      buildConfig.features[feature].assets?.filter(
+        (asset) => !('exclusiveInclude' in asset),
+      ) ?? [],
   );
-  const dev = createTask(
-    'static:dev',
-    composeSeries(
-      ...copyTargetsDev.map((target) => {
-        return async function copyStaticAssets() {
-          await setupLiveCopy(target);
-        };
-      }),
-    ),
+
+  Object.entries(copyTargetsProds).forEach(([_, copyTargetsProd]) =>
+    copyTargetsProd.push(...additionalAssets),
   );
+  Object.entries(copyTargetsDevs).forEach(([_, copyTargetsDev]) =>
+    copyTargetsDev.push(...additionalAssets),
+  );
+
+  const prodTasks = [];
+  Object.entries(copyTargetsProds).forEach(([browser, copyTargetsProd]) => {
+    copyTargetsProd.forEach((target) => {
+      prodTasks.push(async function copyStaticAssets() {
+        await performCopy(target, browser);
+      });
+    });
+  });
+
+  const devTasks = [];
+  Object.entries(copyTargetsDevs).forEach(([browser, copyTargetsDev]) => {
+    copyTargetsDev.forEach((target) => {
+      devTasks.push(async function copyStaticAssets() {
+        await setupLiveCopy(target, browser);
+      });
+    });
+  });
+
+  const prod = createTask(TASKS.STATIC_PROD, composeSeries(...prodTasks));
+  const dev = createTask(TASKS.STATIC_DEV, composeSeries(...devTasks));
 
   return { dev, prod };
 
-  async function setupLiveCopy(target) {
-    const pattern = target.pattern || '/**/*';
+  async function setupLiveCopy(target, browser) {
+    const pattern = target.pattern === undefined ? '/**/*' : target.pattern;
     watch(target.src + pattern, (event) => {
       livereload.changed(event.path);
-      performCopy(target);
+      performCopy(target, browser);
     });
-    await performCopy(target);
+    await performCopy(target, browser);
   }
 
-  async function performCopy(target) {
-    await Promise.all(
-      browserPlatforms.map(async (platform) => {
-        if (target.pattern) {
-          await copyGlob(
-            target.src,
-            `${target.src}${target.pattern}`,
-            `./dist/${platform}/${target.dest}`,
-          );
-        } else {
-          await copyGlob(
-            target.src,
-            `${target.src}`,
-            `./dist/${platform}/${target.dest}`,
-          );
-        }
-      }),
-    );
+  async function performCopy(target, browser) {
+    if (target.pattern === undefined) {
+      await copyGlob(
+        target.src,
+        `${target.src}`,
+        `./dist/${browser}/${target.dest}`,
+      );
+    } else {
+      await copyGlob(
+        target.src,
+        `${target.src}${target.pattern}`,
+        `./dist/${browser}/${target.dest}`,
+      );
+    }
   }
 
   async function copyGlob(baseDir, srcGlob, dest) {
@@ -158,8 +102,144 @@ function createStaticAssetTasks({ livereload, browserPlatforms }) {
     await Promise.all(
       sources.map(async (src) => {
         const relativePath = path.relative(baseDir, src);
-        await fs.copy(src, `${dest}${relativePath}`);
+        await fs.copy(src, `${dest}${relativePath}`, { overwrite: true });
       }),
     );
   }
+};
+
+function getCopyTargets(shouldIncludeLockdown, shouldIncludeSnow) {
+  const allCopyTargets = [
+    {
+      src: `./app/_locales/`,
+      dest: `_locales`,
+    },
+    {
+      src: `./app/images/`,
+      dest: `images`,
+    },
+    {
+      src: getPathInsideNodeModules('@metamask/contract-metadata', 'images/'),
+      dest: `images/contract`,
+    },
+    {
+      src: `./ui/css/utilities/fonts/`,
+      dest: `fonts`,
+    },
+    {
+      src: `./app/vendor/`,
+      dest: `vendor`,
+    },
+    {
+      src: getPathInsideNodeModules(
+        '@fortawesome/fontawesome-free',
+        'webfonts/',
+      ),
+      // update this location in styles.js if it changes
+      dest: `fonts/fontawesome`,
+    },
+    {
+      src: `./ui/css/output/`,
+      pattern: `*.css`,
+      dest: ``,
+    },
+    ...(shouldIncludeSnow
+      ? [
+          {
+            src: `./node_modules/@lavamoat/snow/snow.prod.js`,
+            dest: `scripts/snow.js`,
+          },
+          {
+            src: `./app/scripts/use-snow.js`,
+            dest: `scripts/use-snow.js`,
+          },
+        ]
+      : []),
+    {
+      src: shouldIncludeLockdown
+        ? getPathInsideNodeModules('ses', 'dist/lockdown.umd.min.js')
+        : EMPTY_JS_FILE,
+      dest: `scripts/lockdown-install.js`,
+    },
+    {
+      src: './app/scripts/init-globals.js',
+      dest: 'scripts/init-globals.js',
+    },
+    {
+      src: shouldIncludeLockdown
+        ? `./app/scripts/lockdown-run.js`
+        : EMPTY_JS_FILE,
+      dest: `scripts/lockdown-run.js`,
+    },
+    {
+      src: shouldIncludeLockdown
+        ? `./app/scripts/lockdown-more.js`
+        : EMPTY_JS_FILE,
+      dest: `scripts/lockdown-more.js`,
+    },
+    {
+      src: getPathInsideNodeModules('@lavamoat/lavapack', 'src/runtime-cjs.js'),
+      dest: `scripts/runtime-cjs.js`,
+      pattern: '',
+    },
+    {
+      src: getPathInsideNodeModules('@lavamoat/lavapack', 'src/runtime.js'),
+      dest: `scripts/runtime-lavamoat.js`,
+      pattern: '',
+    },
+    {
+      src: getPathInsideNodeModules('@blockaid/ppom_release', '/'),
+      pattern: '*.wasm',
+      dest: isManifestV3 ? 'scripts/' : '',
+    },
+    ...(isManifestV3
+      ? [
+          {
+            src: getPathInsideNodeModules(
+              '@metamask/snaps-execution-environments',
+              'dist/browserify/iframe/index.html',
+            ),
+            dest: `snaps/index.html`,
+            pattern: '',
+          },
+          {
+            src: getPathInsideNodeModules(
+              '@metamask/snaps-execution-environments',
+              'dist/browserify/iframe/bundle.js',
+            ),
+            dest: `snaps/bundle.js`,
+            pattern: '',
+          },
+        ]
+      : []),
+  ];
+
+  const copyTargetsDev = [
+    ...allCopyTargets,
+    {
+      src: './development',
+      pattern: '/chromereload.js',
+      dest: ``,
+    },
+    // empty files to suppress missing file errors
+    {
+      src: EMPTY_JS_FILE,
+      dest: `bg-libs.js`,
+    },
+    {
+      src: EMPTY_JS_FILE,
+      dest: `ui-libs.js`,
+    },
+  ];
+
+  const copyTargetsProd = [
+    ...allCopyTargets,
+    // empty files to suppress missing file errors
+    {
+      src: EMPTY_JS_FILE,
+      dest: `chromereload.js`,
+    },
+  ];
+
+  return [copyTargetsProd, copyTargetsDev];
 }

@@ -1,13 +1,20 @@
 import { connect } from 'react-redux';
-import { getPreferences } from '../../../selectors';
+import { toggleCurrencySwitch } from '../../../ducks/app/app';
 import UserPreferencedCurrencyInput from './user-preferenced-currency-input.component';
 
 const mapStateToProps = (state) => {
-  const { useNativeCurrencyAsPrimaryCurrency } = getPreferences(state);
-
   return {
-    useNativeCurrencyAsPrimaryCurrency,
+    sendInputCurrencySwitched: state.appState.sendInputCurrencySwitched,
   };
 };
 
-export default connect(mapStateToProps)(UserPreferencedCurrencyInput);
+const mapDispatchToProps = (dispatch) => {
+  return {
+    onPreferenceToggle: () => dispatch(toggleCurrencySwitch()),
+  };
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(UserPreferencedCurrencyInput);

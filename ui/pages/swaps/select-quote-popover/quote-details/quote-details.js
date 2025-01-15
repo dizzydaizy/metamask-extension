@@ -1,8 +1,10 @@
 import React, { useContext } from 'react';
+import { useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import { I18nContext } from '../../../../contexts/i18n';
 import InfoTooltip from '../../../../components/ui/info-tooltip';
 import ExchangeRateDisplay from '../../exchange-rate-display';
+import { getUseCurrencyRateCheck } from '../../../../selectors';
 
 const QuoteDetails = ({
   slippage,
@@ -15,8 +17,11 @@ const QuoteDetails = ({
   feeInEth,
   networkFees,
   metaMaskFee,
+  hideEstimatedGasFee,
 }) => {
   const t = useContext(I18nContext);
+  const useCurrencyRateCheck = useSelector(getUseCurrencyRateCheck);
+
   return (
     <div className="quote-details">
       <div className="quote-details__row">
@@ -37,7 +42,7 @@ const QuoteDetails = ({
           {t('swapMaxSlippage')}
           <InfoTooltip
             position="bottom"
-            contentText={t('swapQuoteDetailsSlippageInfo')}
+            contentText={t('swapSlippageTooltip')}
           />
         </div>
         <div className="quote-details__detail-content">{`${slippage}%`}</div>
@@ -55,23 +60,30 @@ const QuoteDetails = ({
           <span className="quote-details__bold">{` ${destinationTokenSymbol}`}</span>
         </div>
       </div>
-      <div className="quote-details__row">
-        <div className="quote-details__detail-header">
-          {t('swapEstimatedNetworkFees')}
-          <InfoTooltip
-            position="bottom"
-            contentText={t('swapEstimatedNetworkFeesInfo')}
-          />
+      {!hideEstimatedGasFee && (
+        <div className="quote-details__row">
+          <div className="quote-details__detail-header">
+            {t('swapEstimatedNetworkFees')}
+            <InfoTooltip
+              position="bottom"
+              contentText={t('swapEstimatedNetworkFeesInfo')}
+            />
+          </div>
+          <div className="quote-details__detail-content">
+            <span>{feeInEth}</span>
+            <span className="quote-details__light-grey">
+              {useCurrencyRateCheck && ` (${networkFees})`}
+            </span>
+          </div>
         </div>
-        <div className="quote-details__detail-content">
-          <span>{feeInEth}</span>
-          <span className="quote-details__light-grey">{` (${networkFees})`}</span>
-        </div>
-      </div>
+      )}
       <div className="quote-details__row">
         <div className="quote-details__detail-header">
           {t('swapSource')}
-          <InfoTooltip position="bottom" contentText={t('swapSourceInfo')} />
+          <InfoTooltip
+            position="bottom"
+            contentText={t('swapLiquiditySourceInfo')}
+          />
         </div>
         <div className="quote-details__detail-content">
           {t(liquiditySourceKey)}
@@ -105,6 +117,7 @@ QuoteDetails.propTypes = {
   feeInEth: PropTypes.string.isRequired,
   networkFees: PropTypes.string.isRequired,
   metaMaskFee: PropTypes.number.isRequired,
+  hideEstimatedGasFee: PropTypes.bool,
 };
 
 export default QuoteDetails;

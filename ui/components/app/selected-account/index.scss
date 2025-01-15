@@ -1,3 +1,5 @@
+@use "design-system";
+
 .selected-account {
   display: flex;
   flex-direction: column;
@@ -7,27 +9,6 @@
 
   &__tooltip-wrapper {
     width: 100%;
-  }
-
-  &__name {
-    @include H5;
-
-    width: 100%;
-    font-weight: 500;
-    color: $black;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    text-align: center;
-    margin-bottom: 4px;
-  }
-
-  &__address {
-    @include H7;
-
-    color: #989a9b;
-    display: flex;
-    align-items: center;
   }
 
   &__clickable {
@@ -42,18 +23,14 @@
     width: 100%;
     background-color: unset;
 
-    &:hover {
-      background-color: $Grey-000;
-    }
-
+    &:hover,
     &:active {
-      background-color: #d9d7da;
+      background-color: var(--color-background-default-hover);
     }
   }
 
   &__copy {
-    height: 13px;
-    display: inline-block;
+    display: flex;
     margin-inline-start: 3px;
   }
 }

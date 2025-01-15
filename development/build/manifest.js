@@ -1,15 +1,31 @@
 const { promises: fs } = require('fs');
 const path = require('path');
-const { merge, cloneDeep } = require('lodash');
+const childProcess = require('child_process');
+const { mergeWith, cloneDeep } = require('lodash');
+const { isManifestV3 } = require('../../shared/modules/mv3.utils');
 
-const baseManifest = require('../../app/manifest/_base.json');
-const { version } = require('../../package.json');
+const baseManifest = isManifestV3
+  ? require('../../app/manifest/v3/_base.json')
+  : require('../../app/manifest/v2/_base.json');
+const baradDurManifest = isManifestV3
+  ? require('../../app/manifest/v3/_barad_dur.json')
+  : require('../../app/manifest/v2/_barad_dur.json');
+const { loadBuildTypesConfig } = require('../lib/build-type');
 
+const { TASKS, ENVIRONMENT } = require('./constants');
 const { createTask, composeSeries } = require('./task');
+const { getEnvironment, getBuildName } = require('./utils');
 
 module.exports = createManifestTasks;
 
-function createManifestTasks({ browserPlatforms }) {
+function createManifestTasks({
+  browserPlatforms,
+  browserVersionMap,
+  buildType,
+  applyLavaMoat,
+  shouldIncludeSnow,
+  entryTask,
+}) {
   // merge base manifest with per-platform manifests
   const prepPlatforms = async () => {
     return Promise.all(
@@ -20,15 +36,21 @@ function createManifestTasks({ browserPlatforms }) {
             '..',
             '..',
             'app',
-            'manifest',
+            isManifestV3 ? 'manifest/v3' : 'manifest/v2',
             `${platform}.json`,
           ),
         );
-        const result = merge(
+        const result = mergeWith(
           cloneDeep(baseManifest),
-          { version },
+          process.env.BARAD_DUR ? cloneDeep(baradDurManifest) : {},
           platformModifications,
+          browserVersionMap[platform],
+          await getBuildModifications(buildType, platform),
+          customArrayMerge,
         );
+
+        modifyNameAndDescForNonProd(result);
+
         const dir = path.join('.', 'dist', platform);
         await fs.mkdir(dir, { recursive: true });
         await writeJson(result, path.join(dir, 'manifest.json'));
@@ -47,6 +69,7 @@ function createManifestTasks({ browserPlatforms }) {
       ...manifest.permissions,
       'webRequestBlocking',
       'http://localhost/*',
+      'tabs', // test builds need tabs permission for switchToWindowWithTitle
     ];
   });
 
@@ -56,23 +79,27 @@ function createManifestTasks({ browserPlatforms }) {
       ...manifest.permissions,
       'webRequestBlocking',
       'http://localhost/*',
+      'tabs', // test builds need tabs permission for switchToWindowWithTitle
     ];
   });
 
   // high level manifest tasks
-  const dev = createTask('manifest:dev', composeSeries(prepPlatforms, envDev));
+  const dev = createTask(
+    TASKS.MANIFEST_DEV,
+    composeSeries(prepPlatforms, envDev),
+  );
 
   const testDev = createTask(
-    'manifest:testDev',
+    TASKS.MANIFEST_TEST_DEV,
     composeSeries(prepPlatforms, envTestDev),
   );
 
   const test = createTask(
-    'manifest:test',
+    TASKS.MANIFEST_TEST,
     composeSeries(prepPlatforms, envTest),
   );
 
-  const prod = createTask('manifest:prod', prepPlatforms);
+  const prod = createTask(TASKS.MANIFEST_PROD, prepPlatforms);
 
   return { prod, dev, testDev, test };
 
@@ -89,10 +116,45 @@ function createManifestTasks({ browserPlatforms }) {
           );
           const manifest = await readJson(manifestPath);
           transformFn(manifest);
+
           await writeJson(manifest, manifestPath);
         }),
       );
     };
+  }
+
+  // For non-production builds only, modify the extension's name and description
+  function modifyNameAndDescForNonProd(manifest) {
+    const environment = getEnvironment({ buildTarget: entryTask });
+
+    if (environment === ENVIRONMENT.PRODUCTION) {
+      return;
+    }
+
+    // Get the first 8 characters of the git revision id
+    const gitRevisionStr = childProcess
+      .execSync('git rev-parse HEAD')
+      .toString()
+      .trim()
+      .substring(0, 8);
+
+    manifest.name = getBuildName({
+      environment,
+      buildType,
+      applyLavaMoat,
+      shouldIncludeSnow,
+      isManifestV3,
+    });
+
+    manifest.description = `${environment} build from git id: ${gitRevisionStr}`;
+  }
+
+  // helper for merging obj value
+  function customArrayMerge(objValue, srcValue) {
+    if (Array.isArray(objValue)) {
+      return [...new Set([...objValue, ...srcValue])];
+    }
+    return undefined;
   }
 }
 
@@ -104,4 +166,54 @@ async function readJson(file) {
 // helper for serializing and writing json to fs
 async function writeJson(obj, file) {
   return fs.writeFile(file, JSON.stringify(obj, null, 2));
+}
+
+/**
+ * Get manifest modifications for the given build type, including modifications specific to the
+ * given platform.
+ *
+ * @param {string} buildType - The build type.
+ * @param {string} platform - The platform (i.e. the browser).
+ * @returns {object} The build modifications for the given build type and platform.
+ */
+async function getBuildModifications(buildType, platform) {
+  const buildConfig = loadBuildTypesConfig();
+  if (!(buildType in buildConfig.buildTypes)) {
+    throw new Error(`Invalid build type: ${buildType}`);
+  }
+
+  const overridesPath = buildConfig.buildTypes[buildType].manifestOverrides;
+  if (!overridesPath) {
+    return {};
+  }
+
+  const builtTypeManifestDirectoryPath = path.resolve(
+    process.cwd(),
+    overridesPath,
+  );
+
+  const baseBuildTypeModificationsPath = path.join(
+    builtTypeManifestDirectoryPath,
+    '_base.json',
+  );
+  const buildModifications = await readJson(baseBuildTypeModificationsPath);
+
+  const platformBuildTypeModificationsPath = path.join(
+    builtTypeManifestDirectoryPath,
+    `${platform}.json`,
+  );
+  try {
+    const platformBuildTypeModifications = await readJson(
+      platformBuildTypeModificationsPath,
+    );
+    Object.assign(buildModifications, platformBuildTypeModifications);
+  } catch (error) {
+    // Suppress 'ENOENT' error because it indicates there are no platform-specific manifest
+    // modifications for this build type.
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+
+  return buildModifications;
 }

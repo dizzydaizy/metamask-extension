@@ -1,41 +1,71 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import SiteIcon from '../../ui/site-icon';
+import classnames from 'classnames';
+import { SubjectType } from '@metamask/permission-controller';
+import SiteOrigin from '../../ui/site-origin';
+import Box from '../../ui/box';
+import {
+  FLEX_DIRECTION,
+  JustifyContent,
+} from '../../../helpers/constants/design-system';
 
 export default class PermissionsConnectHeader extends Component {
   static propTypes = {
-    icon: PropTypes.string,
+    className: PropTypes.string,
+    iconUrl: PropTypes.string,
     iconName: PropTypes.string.isRequired,
     siteOrigin: PropTypes.string.isRequired,
     headerTitle: PropTypes.node,
+    boxProps: PropTypes.shape({ ...Box.propTypes }),
     headerText: PropTypes.string,
+    leftIcon: PropTypes.node,
+    rightIcon: PropTypes.node,
+    subjectType: PropTypes.string,
   };
 
   static defaultProps = {
-    icon: null,
+    iconUrl: null,
     headerTitle: '',
     headerText: '',
+    boxProps: {},
   };
 
   renderHeaderIcon() {
-    const { icon, iconName, siteOrigin } = this.props;
+    const { iconUrl, iconName, siteOrigin, leftIcon, rightIcon, subjectType } =
+      this.props;
+
+    if (subjectType === SubjectType.Snap) {
+      return null;
+    }
 
     return (
       <div className="permissions-connect-header__icon">
-        <SiteIcon icon={icon} name={iconName} size={64} />
-        <div className="permissions-connect-header__text">{siteOrigin}</div>
+        <SiteOrigin
+          chip
+          siteOrigin={siteOrigin}
+          title={siteOrigin}
+          iconSrc={iconUrl}
+          name={iconName}
+          leftIcon={leftIcon}
+          rightIcon={rightIcon}
+        />
       </div>
     );
   }
 
   render() {
-    const { headerTitle, headerText } = this.props;
+    const { boxProps, className, headerTitle, headerText } = this.props;
     return (
-      <div className="permissions-connect-header">
+      <Box
+        className={classnames('permissions-connect-header', className)}
+        flexDirection={FLEX_DIRECTION.COLUMN}
+        justifyContent={JustifyContent.center}
+        {...boxProps}
+      >
         {this.renderHeaderIcon()}
         <div className="permissions-connect-header__title">{headerTitle}</div>
         <div className="permissions-connect-header__subtitle">{headerText}</div>
-      </div>
+      </Box>
     );
   }
 }

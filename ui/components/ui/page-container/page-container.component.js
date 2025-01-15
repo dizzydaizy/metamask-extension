@@ -5,6 +5,10 @@ import PageContainerHeader from './page-container-header';
 import PageContainerFooter from './page-container-footer';
 
 export default class PageContainer extends PureComponent {
+  static contextTypes = {
+    t: PropTypes.func,
+  };
+
   static propTypes = {
     // PageContainerHeader props
     backButtonString: PropTypes.string,
@@ -70,9 +74,7 @@ export default class PageContainer extends PureComponent {
     children = children.filter(Boolean);
     const { activeTabIndex } = this.state;
 
-    return children[activeTabIndex]
-      ? children[activeTabIndex].props.children
-      : children.props.children;
+    return (children[activeTabIndex] || children[0]).props.children;
   }
 
   renderContent() {
@@ -103,7 +105,6 @@ export default class PageContainer extends PureComponent {
       headerCloseText,
       hideCancel,
     } = this.props;
-
     return (
       <div className="page-container">
         <PageContainerHeader

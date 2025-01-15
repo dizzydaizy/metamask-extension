@@ -4,12 +4,14 @@ import React, { Component } from 'react';
 import { matchPath, Route, Switch } from 'react-router-dom';
 import IdleTimer from 'react-idle-timer';
 
-import FirstTimeFlow from '../first-time-flow';
-import SendTransactionScreen from '../send';
 import Swaps from '../swaps';
-import ConfirmTransaction from '../confirm-transaction';
-import Sidebar from '../../components/app/sidebars';
+import ConfirmTransaction from '../confirmations/confirm-transaction';
 import Home from '../home';
+import {
+  PermissionsPage,
+  Connections,
+  ReviewPermissions,
+} from '../../components/multichain/pages';
 import Settings from '../settings';
 import Authenticated from '../../helpers/higher-order-components/authenticated';
 import Initialized from '../../helpers/higher-order-components/initialized';
@@ -17,34 +19,46 @@ import Lock from '../lock';
 import PermissionsConnect from '../permissions-connect';
 import RestoreVaultPage from '../keychains/restore-vault';
 import RevealSeedConfirmation from '../keychains/reveal-seed';
-import MobileSyncPage from '../mobile-sync';
-import AddTokenPage from '../add-token';
-import ConfirmAddTokenPage from '../confirm-add-token';
 import ConfirmAddSuggestedTokenPage from '../confirm-add-suggested-token';
-import CreateAccountPage from '../create-account';
+import CreateAccountPage from '../create-account/create-account.component';
+import ConfirmAddSuggestedNftPage from '../confirm-add-suggested-nft';
 import Loading from '../../components/ui/loading-screen';
 import LoadingNetwork from '../../components/app/loading-network-screen';
-import NetworkDropdown from '../../components/app/dropdowns/network-dropdown';
-import AccountMenu from '../../components/app/account-menu';
 import { Modal } from '../../components/app/modals';
 import Alert from '../../components/ui/alert';
-import AppHeader from '../../components/app/app-header';
+import {
+  AppHeader,
+  AccountListMenu,
+  NetworkListMenu,
+  AccountDetails,
+  ImportNftsModal,
+  ImportTokensModal,
+} from '../../components/multichain';
 import UnlockPage from '../unlock-page';
 import Alerts from '../../components/app/alerts';
 import Asset from '../asset';
+import OnboardingAppHeader from '../onboarding-flow/onboarding-app-header/onboarding-app-header';
+import Notifications from '../notifications';
+import NotificationsSettings from '../notifications-settings';
+import NotificationDetails from '../notification-details';
+import SnapList from '../snaps/snaps-list';
+import SnapView from '../snaps/snap-view';
+///: BEGIN:ONLY_INCLUDE_IF(build-mmi)
+import InstitutionalEntityDonePage from '../institutional/institutional-entity-done-page';
+import InteractiveReplacementTokenNotification from '../../components/institutional/interactive-replacement-token-notification';
+import ConfirmAddCustodianToken from '../institutional/confirm-add-custodian-token';
+import InteractiveReplacementTokenPage from '../institutional/interactive-replacement-token-page';
+import CustodyPage from '../institutional/custody';
+///: END:ONLY_INCLUDE_IF
 
 import {
-  ADD_TOKEN_ROUTE,
   ASSET_ROUTE,
   CONFIRM_ADD_SUGGESTED_TOKEN_ROUTE,
-  CONFIRM_ADD_TOKEN_ROUTE,
+  CONFIRM_ADD_SUGGESTED_NFT_ROUTE,
   CONFIRM_TRANSACTION_ROUTE,
   CONNECT_ROUTE,
   DEFAULT_ROUTE,
-  INITIALIZE_ROUTE,
-  INITIALIZE_UNLOCK_ROUTE,
   LOCK_ROUTE,
-  MOBILE_SYNC_ROUTE,
   NEW_ACCOUNT_ROUTE,
   RESTORE_VAULT_ROUTE,
   REVEAL_SEED_ROUTE,
@@ -52,45 +66,119 @@ import {
   SWAPS_ROUTE,
   SETTINGS_ROUTE,
   UNLOCK_ROUTE,
-  BUILD_QUOTE_ROUTE,
   CONFIRMATION_V_NEXT_ROUTE,
+  ONBOARDING_ROUTE,
+  CONNECTIONS,
+  PERMISSIONS,
+  REVIEW_PERMISSIONS,
+  ///: BEGIN:ONLY_INCLUDE_IF(build-mmi)
+  INSTITUTIONAL_FEATURES_DONE_ROUTE,
+  CUSTODY_ACCOUNT_DONE_ROUTE,
+  CONFIRM_ADD_CUSTODIAN_TOKEN,
+  INTERACTIVE_REPLACEMENT_TOKEN_PAGE,
+  CUSTODY_ACCOUNT_ROUTE,
+  ///: END:ONLY_INCLUDE_IF
+  SNAPS_ROUTE,
+  SNAPS_VIEW_ROUTE,
+  NOTIFICATIONS_ROUTE,
+  NOTIFICATIONS_SETTINGS_ROUTE,
+  CROSS_CHAIN_SWAP_ROUTE,
 } from '../../helpers/constants/routes';
 
 import {
   ENVIRONMENT_TYPE_NOTIFICATION,
   ENVIRONMENT_TYPE_POPUP,
+  ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
+  SNAP_MANAGE_ACCOUNTS_CONFIRMATION_TYPES,
+  ///: END:ONLY_INCLUDE_IF
 } from '../../../shared/constants/app';
+// TODO: Remove restricted import
+// eslint-disable-next-line import/no-restricted-paths
 import { getEnvironmentType } from '../../../app/scripts/lib/util';
-import { TRANSACTION_STATUSES } from '../../../shared/constants/transaction';
-import ConfirmationPage from '../confirmation';
+import ConfirmationPage from '../confirmations/confirmation';
+import OnboardingFlow from '../onboarding-flow/onboarding-flow';
+import QRHardwarePopover from '../../components/app/qr-hardware-popover';
+import DeprecatedNetworks from '../../components/ui/deprecated-networks/deprecated-networks';
+import NewNetworkInfo from '../../components/ui/new-network-info/new-network-info';
+import { Box } from '../../components/component-library';
+import { ToggleIpfsModal } from '../../components/app/assets/nfts/nft-default-image/toggle-ipfs-modal';
+import { BasicConfigurationModal } from '../../components/app/basic-configuration-modal';
+///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
+import KeyringSnapRemovalResult from '../../components/app/modals/keyring-snap-removal-modal';
+///: END:ONLY_INCLUDE_IF
+
+import { SendPage } from '../../components/multichain/pages/send';
+import { DeprecatedNetworkModal } from '../settings/deprecated-network-modal/DeprecatedNetworkModal';
+import { MultichainMetaFoxLogo } from '../../components/multichain/app-header/multichain-meta-fox-logo';
+import NetworkConfirmationPopover from '../../components/multichain/network-list-menu/network-confirmation-popover/network-confirmation-popover';
+import NftFullImage from '../../components/app/assets/nfts/nft-details/nft-full-image';
+import CrossChainSwap from '../bridge';
+import { ToastMaster } from '../../components/app/toast-master/toast-master';
+import {
+  getConnectingLabel,
+  hideAppHeader,
+  isConfirmTransactionRoute,
+  setTheme,
+  showOnboardingHeader,
+} from './utils';
 
 export default class Routes extends Component {
   static propTypes = {
     currentCurrency: PropTypes.string,
+    activeTabOrigin: PropTypes.string,
     setCurrentCurrencyToUSD: PropTypes.func,
     isLoading: PropTypes.bool,
     loadingMessage: PropTypes.string,
     alertMessage: PropTypes.string,
     textDirection: PropTypes.string,
     isNetworkLoading: PropTypes.bool,
-    provider: PropTypes.object,
-    frequentRpcListDetail: PropTypes.array,
-    sidebar: PropTypes.object,
     alertOpen: PropTypes.bool,
-    hideSidebar: PropTypes.func,
     isUnlocked: PropTypes.bool,
     setLastActiveTime: PropTypes.func,
     history: PropTypes.object,
     location: PropTypes.object,
-    lockMetaMask: PropTypes.func,
-    submittedPendingTransactions: PropTypes.array,
-    isMouseUser: PropTypes.bool,
-    setMouseUserState: PropTypes.func,
-    providerId: PropTypes.string,
     autoLockTimeLimit: PropTypes.number,
+    privacyMode: PropTypes.bool,
     pageChanged: PropTypes.func.isRequired,
-    prepareToLeaveSwaps: PropTypes.func,
-    browserEnvironment: PropTypes.object,
+    browserEnvironmentOs: PropTypes.string,
+    browserEnvironmentBrowser: PropTypes.string,
+    theme: PropTypes.string,
+    isNetworkUsed: PropTypes.bool,
+    allAccountsOnNetworkAreEmpty: PropTypes.bool,
+    isTestNet: PropTypes.bool,
+    showExtensionInFullSizeView: PropTypes.bool,
+    currentChainId: PropTypes.string,
+    shouldShowSeedPhraseReminder: PropTypes.bool,
+    forgottenPassword: PropTypes.bool,
+    isCurrentProviderCustom: PropTypes.bool,
+    completedOnboarding: PropTypes.bool,
+    isAccountMenuOpen: PropTypes.bool,
+    toggleAccountMenu: PropTypes.func,
+    isNetworkMenuOpen: PropTypes.bool,
+    toggleNetworkMenu: PropTypes.func,
+    accountDetailsAddress: PropTypes.string,
+    isImportNftsModalOpen: PropTypes.bool.isRequired,
+    hideImportNftsModal: PropTypes.func.isRequired,
+    isIpfsModalOpen: PropTypes.bool.isRequired,
+    isBasicConfigurationModalOpen: PropTypes.bool.isRequired,
+    hideIpfsModal: PropTypes.func.isRequired,
+    isImportTokensModalOpen: PropTypes.bool.isRequired,
+    hideImportTokensModal: PropTypes.func.isRequired,
+    isDeprecatedNetworkModalOpen: PropTypes.bool.isRequired,
+    hideDeprecatedNetworkModal: PropTypes.func.isRequired,
+    switchedNetworkDetails: PropTypes.object,
+    clearSwitchedNetworkDetails: PropTypes.func.isRequired,
+    networkToAutomaticallySwitchTo: PropTypes.object,
+    automaticallySwitchNetwork: PropTypes.func.isRequired,
+    totalUnapprovedConfirmationCount: PropTypes.number.isRequired,
+    currentExtensionPopupId: PropTypes.number,
+    useRequestQueue: PropTypes.bool,
+    clearEditedNetwork: PropTypes.func.isRequired,
+    ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
+    isShowKeyringSnapRemovalResultModal: PropTypes.bool.isRequired,
+    hideShowKeyringSnapRemovalResultModal: PropTypes.func.isRequired,
+    pendingConfirmations: PropTypes.array.isRequired,
+    ///: END:ONLY_INCLUDE_IF
   };
 
   static contextTypes = {
@@ -98,13 +186,62 @@ export default class Routes extends Component {
     metricsEvent: PropTypes.func,
   };
 
+  componentDidUpdate(prevProps) {
+    const {
+      theme,
+      networkToAutomaticallySwitchTo,
+      activeTabOrigin,
+      totalUnapprovedConfirmationCount,
+      isUnlocked,
+      useRequestQueue,
+      currentExtensionPopupId,
+    } = this.props;
+    if (theme !== prevProps.theme) {
+      setTheme(theme);
+    }
+
+    // Automatically switch the network if the user
+    // no longer has unapproved transactions and they
+    // should be on a different network for the
+    // currently active tab's dapp
+    if (
+      networkToAutomaticallySwitchTo &&
+      totalUnapprovedConfirmationCount === 0 &&
+      (prevProps.totalUnapprovedConfirmationCount > 0 ||
+        (prevProps.isUnlocked === false && isUnlocked))
+    ) {
+      this.props.automaticallySwitchNetwork(
+        networkToAutomaticallySwitchTo,
+        activeTabOrigin,
+      );
+    }
+
+    // Terminate the popup when another popup is opened
+    // if the user is using RPC queueing
+    if (
+      useRequestQueue &&
+      currentExtensionPopupId !== undefined &&
+      global.metamask.id !== undefined &&
+      currentExtensionPopupId !== global.metamask.id
+    ) {
+      window.close();
+    }
+  }
+
   UNSAFE_componentWillMount() {
     const {
       currentCurrency,
       pageChanged,
       setCurrentCurrencyToUSD,
       history,
+      showExtensionInFullSizeView,
     } = this.props;
+
+    const windowType = getEnvironmentType();
+    if (showExtensionInFullSizeView && windowType === ENVIRONMENT_TYPE_POPUP) {
+      global.platform.openExtensionInBrowser();
+    }
+
     if (!currentCurrency) {
       setCurrentCurrencyToUSD();
     }
@@ -114,17 +251,21 @@ export default class Routes extends Component {
         pageChanged(locationObj.pathname);
       }
     });
+
+    setTheme(this.props.theme);
   }
 
   renderRoutes() {
-    const { autoLockTimeLimit, setLastActiveTime } = this.props;
+    const { autoLockTimeLimit, setLastActiveTime, forgottenPassword } =
+      this.props;
+    const RestoreVaultComponent = forgottenPassword ? Route : Initialized;
 
     const routes = (
       <Switch>
+        <Route path={ONBOARDING_ROUTE} component={OnboardingFlow} />
         <Route path={LOCK_ROUTE} component={Lock} exact />
-        <Route path={INITIALIZE_ROUTE} component={FirstTimeFlow} />
         <Initialized path={UNLOCK_ROUTE} component={UnlockPage} exact />
-        <Initialized
+        <RestoreVaultComponent
           path={RESTORE_VAULT_ROUTE}
           component={RestoreVaultPage}
           exact
@@ -134,27 +275,27 @@ export default class Routes extends Component {
           component={RevealSeedConfirmation}
           exact
         />
-        <Authenticated
-          path={MOBILE_SYNC_ROUTE}
-          component={MobileSyncPage}
-          exact
-        />
         <Authenticated path={SETTINGS_ROUTE} component={Settings} />
+        <Authenticated
+          path={NOTIFICATIONS_SETTINGS_ROUTE}
+          component={NotificationsSettings}
+        />
+        <Authenticated
+          path={`${NOTIFICATIONS_ROUTE}/:uuid`}
+          component={NotificationDetails}
+        />
+        <Authenticated path={NOTIFICATIONS_ROUTE} component={Notifications} />
+        <Authenticated exact path={SNAPS_ROUTE} component={SnapList} />
+        <Authenticated path={SNAPS_VIEW_ROUTE} component={SnapView} />
         <Authenticated
           path={`${CONFIRM_TRANSACTION_ROUTE}/:id?`}
           component={ConfirmTransaction}
         />
-        <Authenticated
-          path={SEND_ROUTE}
-          component={SendTransactionScreen}
-          exact
-        />
+        <Authenticated path={SEND_ROUTE} component={SendPage} exact />
         <Authenticated path={SWAPS_ROUTE} component={Swaps} />
-        <Authenticated path={ADD_TOKEN_ROUTE} component={AddTokenPage} exact />
         <Authenticated
-          path={CONFIRM_ADD_TOKEN_ROUTE}
-          component={ConfirmAddTokenPage}
-          exact
+          path={CROSS_CHAIN_SWAP_ROUTE}
+          component={CrossChainSwap}
         />
         <Authenticated
           path={CONFIRM_ADD_SUGGESTED_TOKEN_ROUTE}
@@ -162,15 +303,71 @@ export default class Routes extends Component {
           exact
         />
         <Authenticated
-          path={CONFIRMATION_V_NEXT_ROUTE}
+          path={CONFIRM_ADD_SUGGESTED_NFT_ROUTE}
+          component={ConfirmAddSuggestedNftPage}
+          exact
+        />
+        <Authenticated
+          path={`${CONFIRMATION_V_NEXT_ROUTE}/:id?`}
           component={ConfirmationPage}
         />
+        {
+          ///: BEGIN:ONLY_INCLUDE_IF(build-mmi)
+        }
+        <Authenticated
+          path={CUSTODY_ACCOUNT_DONE_ROUTE}
+          component={InstitutionalEntityDonePage}
+          exact
+        />
+        <Authenticated
+          path={INSTITUTIONAL_FEATURES_DONE_ROUTE}
+          component={InstitutionalEntityDonePage}
+          exact
+        />
+        <Authenticated
+          path={CONFIRM_ADD_CUSTODIAN_TOKEN}
+          component={ConfirmAddCustodianToken}
+          exact
+        />
+        <Authenticated
+          path={INTERACTIVE_REPLACEMENT_TOKEN_PAGE}
+          component={InteractiveReplacementTokenPage}
+          exact
+        />
+        <Authenticated
+          path={CONFIRM_ADD_CUSTODIAN_TOKEN}
+          component={ConfirmAddCustodianToken}
+        />
+        <Authenticated
+          path={CUSTODY_ACCOUNT_ROUTE}
+          component={CustodyPage}
+          exact
+        />
+        {
+          ///: END:ONLY_INCLUDE_IF
+        }
         <Authenticated path={NEW_ACCOUNT_ROUTE} component={CreateAccountPage} />
         <Authenticated
           path={`${CONNECT_ROUTE}/:id`}
           component={PermissionsConnect}
         />
-        <Authenticated path={`${ASSET_ROUTE}/:asset`} component={Asset} />
+        <Authenticated
+          path={`${ASSET_ROUTE}/image/:asset/:id`}
+          component={NftFullImage}
+        />
+
+        <Authenticated path={`${ASSET_ROUTE}/:asset/:id`} component={Asset} />
+        <Authenticated path={`${ASSET_ROUTE}/:asset/`} component={Asset} />
+        <Authenticated
+          path={`${CONNECTIONS}/:origin`}
+          component={Connections}
+        />
+        <Authenticated path={PERMISSIONS} component={PermissionsPage} exact />
+        <Authenticated
+          path={`${REVIEW_PERMISSIONS}/:origin`}
+          component={ReviewPermissions}
+          exact
+        />
         <Authenticated path={DEFAULT_ROUTE} component={Home} />
       </Switch>
     );
@@ -186,81 +383,6 @@ export default class Routes extends Component {
     return routes;
   }
 
-  onInitializationUnlockPage() {
-    const { location } = this.props;
-    return Boolean(
-      matchPath(location.pathname, {
-        path: INITIALIZE_UNLOCK_ROUTE,
-        exact: true,
-      }),
-    );
-  }
-
-  onConfirmPage() {
-    const { location } = this.props;
-    return Boolean(
-      matchPath(location.pathname, {
-        path: CONFIRM_TRANSACTION_ROUTE,
-        exact: false,
-      }),
-    );
-  }
-
-  onSwapsPage() {
-    const { location } = this.props;
-    return Boolean(
-      matchPath(location.pathname, { path: SWAPS_ROUTE, exact: false }),
-    );
-  }
-
-  onSwapsBuildQuotePage() {
-    const { location } = this.props;
-    return Boolean(
-      matchPath(location.pathname, { path: BUILD_QUOTE_ROUTE, exact: false }),
-    );
-  }
-
-  hideAppHeader() {
-    const { location } = this.props;
-
-    const isInitializing = Boolean(
-      matchPath(location.pathname, {
-        path: INITIALIZE_ROUTE,
-        exact: false,
-      }),
-    );
-
-    if (isInitializing && !this.onInitializationUnlockPage()) {
-      return true;
-    }
-
-    const windowType = getEnvironmentType();
-
-    if (windowType === ENVIRONMENT_TYPE_NOTIFICATION) {
-      return true;
-    }
-
-    if (windowType === ENVIRONMENT_TYPE_POPUP && this.onConfirmPage()) {
-      return true;
-    }
-
-    const isHandlingPermissionsRequest = Boolean(
-      matchPath(location.pathname, {
-        path: CONNECT_ROUTE,
-        exact: false,
-      }),
-    );
-
-    const isHandlingAddEthereumChainRequest = Boolean(
-      matchPath(location.pathname, {
-        path: CONFIRMATION_V_NEXT_ROUTE,
-        exact: false,
-      }),
-    );
-
-    return isHandlingPermissionsRequest || isHandlingAddEthereumChainRequest;
-  }
-
   render() {
     const {
       isLoading,
@@ -269,141 +391,169 @@ export default class Routes extends Component {
       textDirection,
       loadingMessage,
       isNetworkLoading,
-      provider,
-      frequentRpcListDetail,
-      setMouseUserState,
-      sidebar,
-      submittedPendingTransactions,
-      isMouseUser,
-      prepareToLeaveSwaps,
-      browserEnvironment,
+      browserEnvironmentOs: os,
+      browserEnvironmentBrowser: browser,
+      isNetworkUsed,
+      allAccountsOnNetworkAreEmpty,
+      isTestNet,
+      currentChainId,
+      shouldShowSeedPhraseReminder,
+      isCurrentProviderCustom,
+      completedOnboarding,
+      isAccountMenuOpen,
+      toggleAccountMenu,
+      isNetworkMenuOpen,
+      toggleNetworkMenu,
+      accountDetailsAddress,
+      isImportTokensModalOpen,
+      isDeprecatedNetworkModalOpen,
+      location,
+      isImportNftsModalOpen,
+      hideImportNftsModal,
+      isIpfsModalOpen,
+      isBasicConfigurationModalOpen,
+      hideIpfsModal,
+      hideImportTokensModal,
+      hideDeprecatedNetworkModal,
+      switchedNetworkDetails,
+      clearSwitchedNetworkDetails,
+      clearEditedNetwork,
+      privacyMode,
+      ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
+      isShowKeyringSnapRemovalResultModal,
+      hideShowKeyringSnapRemovalResultModal,
+      pendingConfirmations,
+      ///: END:ONLY_INCLUDE_IF
     } = this.props;
+
     const loadMessage =
       loadingMessage || isNetworkLoading
-        ? this.getConnectingLabel(loadingMessage)
+        ? getConnectingLabel(loadingMessage, this.props, this.context)
         : null;
 
-    const {
-      isOpen: sidebarIsOpen,
-      transitionName: sidebarTransitionName,
-      type: sidebarType,
-      props,
-    } = sidebar;
-    const { transaction: sidebarTransaction } = props || {};
+    // Conditions for displaying the Send route
+    const isSendRoute = matchPath(location.pathname, {
+      path: SEND_ROUTE,
+      exact: false,
+    });
+    const shouldShowNetworkInfo =
+      isUnlocked &&
+      currentChainId &&
+      !isTestNet &&
+      !isSendRoute &&
+      !isNetworkUsed &&
+      !isCurrentProviderCustom &&
+      completedOnboarding &&
+      allAccountsOnNetworkAreEmpty &&
+      switchedNetworkDetails === null;
 
-    const sidebarShouldClose =
-      sidebarTransaction &&
-      !sidebarTransaction.status === TRANSACTION_STATUSES.FAILED &&
-      !submittedPendingTransactions.find(
-        ({ id }) => id === sidebarTransaction.id,
+    const windowType = getEnvironmentType();
+
+    const shouldShowNetworkDeprecationWarning =
+      windowType !== ENVIRONMENT_TYPE_NOTIFICATION &&
+      isUnlocked &&
+      !shouldShowSeedPhraseReminder;
+
+    let isLoadingShown = isLoading && completedOnboarding;
+
+    ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
+    isLoadingShown =
+      isLoading &&
+      completedOnboarding &&
+      !pendingConfirmations.some(
+        (confirmation) =>
+          confirmation.type ===
+          SNAP_MANAGE_ACCOUNTS_CONFIRMATION_TYPES.showSnapAccountRedirect,
       );
+    ///: END:ONLY_INCLUDE_IF
 
-    const { os, browser } = browserEnvironment;
     return (
       <div
         className={classnames('app', {
           [`os-${os}`]: os,
           [`browser-${browser}`]: browser,
-          'mouse-user-styles': isMouseUser,
         })}
         dir={textDirection}
-        onClick={() => setMouseUserState(true)}
-        onKeyDown={(e) => {
-          if (e.keyCode === 9) {
-            setMouseUserState(false);
-          }
-        }}
+        onMouseUp={
+          getShowAutoNetworkSwitchTest(this.props)
+            ? () => clearSwitchedNetworkDetails()
+            : undefined
+        }
       >
+        {shouldShowNetworkDeprecationWarning ? <DeprecatedNetworks /> : null}
+        {location.pathname === DEFAULT_ROUTE && shouldShowNetworkInfo ? (
+          <NewNetworkInfo />
+        ) : null}
+        <QRHardwarePopover />
         <Modal />
         <Alert visible={this.props.alertOpen} msg={alertMessage} />
-        {!this.hideAppHeader() && (
-          <AppHeader
-            hideNetworkIndicator={this.onInitializationUnlockPage()}
-            disableNetworkIndicator={this.onSwapsPage()}
-            onClick={async () => {
-              if (this.onSwapsPage()) {
-                await prepareToLeaveSwaps();
-              }
-            }}
-            disabled={
-              this.onConfirmPage() ||
-              (this.onSwapsPage() && !this.onSwapsBuildQuotePage())
-            }
+        {!hideAppHeader(this.props) && <AppHeader location={location} />}
+        {isConfirmTransactionRoute(this.pathname) && <MultichainMetaFoxLogo />}
+        {showOnboardingHeader(location) && <OnboardingAppHeader />}
+        {
+          ///: BEGIN:ONLY_INCLUDE_IF(build-mmi)
+          isUnlocked ? <InteractiveReplacementTokenNotification /> : null
+          ///: END:ONLY_INCLUDE_IF
+        }
+        {isAccountMenuOpen ? (
+          <AccountListMenu
+            onClose={() => toggleAccountMenu()}
+            privacyMode={privacyMode}
           />
-        )}
-        <Sidebar
-          sidebarOpen={sidebarIsOpen}
-          sidebarShouldClose={sidebarShouldClose}
-          hideSidebar={this.props.hideSidebar}
-          transitionName={sidebarTransitionName}
-          type={sidebarType}
-          sidebarProps={sidebar.props}
-        />
-        <NetworkDropdown
-          provider={provider}
-          frequentRpcListDetail={frequentRpcListDetail}
-        />
-        <AccountMenu />
-        <div className="main-container-wrapper">
-          {isLoading && <Loading loadingMessage={loadMessage} />}
-          {!isLoading && isNetworkLoading && <LoadingNetwork />}
+        ) : null}
+        {isNetworkMenuOpen ? (
+          <NetworkListMenu
+            onClose={() => {
+              toggleNetworkMenu();
+              clearEditedNetwork();
+            }}
+          />
+        ) : null}
+        <NetworkConfirmationPopover />
+        {accountDetailsAddress ? (
+          <AccountDetails address={accountDetailsAddress} />
+        ) : null}
+        {isImportNftsModalOpen ? (
+          <ImportNftsModal onClose={() => hideImportNftsModal()} />
+        ) : null}
+
+        {isIpfsModalOpen ? (
+          <ToggleIpfsModal onClose={() => hideIpfsModal()} />
+        ) : null}
+        {isBasicConfigurationModalOpen ? <BasicConfigurationModal /> : null}
+        {isImportTokensModalOpen ? (
+          <ImportTokensModal onClose={() => hideImportTokensModal()} />
+        ) : null}
+        {isDeprecatedNetworkModalOpen ? (
+          <DeprecatedNetworkModal
+            onClose={() => hideDeprecatedNetworkModal()}
+          />
+        ) : null}
+        {
+          ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
+          isShowKeyringSnapRemovalResultModal && (
+            <KeyringSnapRemovalResult
+              isOpen={isShowKeyringSnapRemovalResultModal}
+              onClose={() => hideShowKeyringSnapRemovalResultModal()}
+            />
+          )
+          ///: END:ONLY_INCLUDE_IF
+        }
+        <Box className="main-container-wrapper">
+          {isLoadingShown ? <Loading loadingMessage={loadMessage} /> : null}
+          {!isLoading && isNetworkLoading && completedOnboarding ? (
+            <LoadingNetwork />
+          ) : null}
           {this.renderRoutes()}
-        </div>
+        </Box>
         {isUnlocked ? <Alerts history={this.props.history} /> : null}
+        <ToastMaster />
       </div>
     );
   }
+}
 
-  toggleMetamaskActive() {
-    if (this.props.isUnlocked) {
-      // currently active: deactivate
-      this.props.lockMetaMask();
-    } else {
-      // currently inactive: redirect to password box
-      const passwordBox = document.querySelector('input[type=password]');
-      if (!passwordBox) {
-        return;
-      }
-      passwordBox.focus();
-    }
-  }
-
-  getConnectingLabel(loadingMessage) {
-    if (loadingMessage) {
-      return loadingMessage;
-    }
-    const { provider, providerId } = this.props;
-
-    switch (provider.type) {
-      case 'mainnet':
-        return this.context.t('connectingToMainnet');
-      case 'ropsten':
-        return this.context.t('connectingToRopsten');
-      case 'kovan':
-        return this.context.t('connectingToKovan');
-      case 'rinkeby':
-        return this.context.t('connectingToRinkeby');
-      case 'goerli':
-        return this.context.t('connectingToGoerli');
-      default:
-        return this.context.t('connectingTo', [providerId]);
-    }
-  }
-
-  getNetworkName() {
-    switch (this.props.provider.type) {
-      case 'mainnet':
-        return this.context.t('mainnet');
-      case 'ropsten':
-        return this.context.t('ropsten');
-      case 'kovan':
-        return this.context.t('kovan');
-      case 'rinkeby':
-        return this.context.t('rinkeby');
-      case 'goerli':
-        return this.context.t('goerli');
-      default:
-        return this.context.t('unknownNetwork');
-    }
-  }
+// Will eventually delete this function
+function getShowAutoNetworkSwitchTest(props) {
+  return props.switchedNetworkDetails && !props.switchedNetworkNeverShowMessage;
 }

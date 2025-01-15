@@ -1,19 +1,13 @@
 import React from 'react';
-import { object, select } from '@storybook/addon-knobs';
 import {
-  COLORS,
-  SIZES,
-  TYPOGRAPHY,
+  Size,
+  TextColor,
+  TypographyVariant,
 } from '../../../helpers/constants/design-system';
 import DefinitionList from './definition-list';
 
-export default {
-  title: 'Definition List',
-};
-
 const basic = {
-  term:
-    'a word or phrase used to describe a thing or to express a concept, especially in a particular kind of language or branch of study.',
+  term: 'a word or phrase used to describe a thing or to express a concept, especially in a particular kind of language or branch of study.',
   definition:
     'a statement of the exact meaning of a word, especially in a dictionary.',
   dl: 'HTML tag denoting a definition list',
@@ -22,48 +16,102 @@ const basic = {
 };
 
 const advanced = {
-  'Network Name': 'Ethereum Mainnet',
+  'Network name': 'Ethereum Mainnet',
   'Chain ID': '1',
-  'Ticker': 'ETH',
+  Ticker: 'ETH',
 };
 
 const tooltips = {
-  'Network Name': 'The name that is associated with this network',
+  'Network name': 'The name that is associated with this network',
   'Chain ID': 'The numeric value representing the ID of this network',
-  'Ticker': 'The currency symbol of the primary currency for this network',
+  Ticker: 'The currency symbol of the primary currency for this network',
 };
 
-export const definitionList = () => (
+export default {
+  title: 'Components/UI/DefinitionList',
+
+  argTypes: {
+    dictionary: { control: 'object', name: 'Dictionary' },
+    gapSize: {
+      control: 'select',
+      name: 'Gap Size',
+      options: Object.values(Size),
+    },
+  },
+  args: {
+    dictionary: basic,
+    gapSize: Size.SM,
+  },
+};
+
+export const DefaultStory = (args) => (
+  <DefinitionList dictionary={args.dictionary} gapSize={args.gapSize} />
+);
+
+DefaultStory.storyName = 'Default';
+
+export const WithTooltips = (args) => (
   <DefinitionList
-    dictionary={object('dictionary', basic)}
-    gapSize={select('gapSize', SIZES, SIZES.SM)}
+    dictionary={args.dictionary}
+    tooltips={args.tooltips}
+    gapSize={args.gapSize}
   />
 );
 
-export const withTooltips = () => (
-  <DefinitionList
-    dictionary={object('dictionary', advanced)}
-    tooltips={object('tooltips', tooltips)}
-    gapSize={select('gapSize', SIZES, SIZES.SM)}
-  />
-);
+WithTooltips.args = {
+  dictionary: advanced,
+  tooltips,
+};
+WithTooltips.argTypes = {
+  tooltips: { control: 'object', name: 'Tooltips' },
+};
 
-export const withTypographyControl = () => (
+export const WithTypographyControl = (args) => (
   <DefinitionList
-    dictionary={object('dictionary', advanced)}
-    tooltips={object('tooltips', tooltips)}
-    gapSize={select('gapSize', SIZES, SIZES.SM)}
+    dictionary={args.dictionary}
+    tooltips={args.tooltips}
+    gapSize={args.gapSize}
     termTypography={{
-      variant: select('termTypography.variant', TYPOGRAPHY, TYPOGRAPHY.H6),
-      color: select('termTypography.color', COLORS, COLORS.BLACK),
+      variant: args.termTypographyVariant,
+      color: args.termTypographyColor,
+      children: <div />,
     }}
     definitionTypography={{
-      variant: select(
-        'definitionTypography.variant',
-        TYPOGRAPHY,
-        TYPOGRAPHY.H6,
-      ),
-      color: select('definitionTypography.color', COLORS, COLORS.BLACK),
+      variant: args.definitionTypographyVariant,
+      color: args.definitionTypographyColor,
+      children: <div />,
     }}
   />
 );
+
+WithTypographyControl.args = {
+  dictionary: advanced,
+  termTypographyVariant: TypographyVariant.H6,
+  termTypographyColor: TextColor.textDefault,
+  definitionTypographyVariant: TypographyVariant.H6,
+  definitionTypographyColor: TextColor.textDefault,
+};
+
+WithTypographyControl.argTypes = {
+  tooltips,
+  termTypographyVariant: {
+    control: 'select',
+    name: 'Term Variant',
+    options: Object.values(TypographyVariant),
+  },
+  termTypographyColor: {
+    control: 'select',
+    name: 'Term Color',
+    options: Object.values(TextColor),
+  },
+  definitionTypographyVariant: {
+    control: 'select',
+    name: 'Definition Variant',
+    options: Object.values(TypographyVariant),
+  },
+  definitionTypographyColor: {
+    control: 'select',
+    name: 'Definition Color',
+    options: Object.values(TextColor),
+  },
+};

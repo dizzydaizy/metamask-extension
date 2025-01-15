@@ -1,12 +1,8 @@
-import { strict as assert } from 'assert';
-import {
-  MAINNET_CHAIN_ID,
-  ROPSTEN_CHAIN_ID,
-} from '../../../shared/constants/network';
+import { CHAIN_IDS } from '../../../shared/constants/network';
 import migration54 from './054';
 
-describe('migration #54', function () {
-  it('should update the version metadata', async function () {
+describe('migration #54', () => {
+  it('should update the version metadata', async () => {
     const oldStorage = {
       meta: {
         version: 53,
@@ -15,12 +11,12 @@ describe('migration #54', function () {
     };
 
     const newStorage = await migration54.migrate(oldStorage);
-    assert.deepEqual(newStorage.meta, {
+    expect(newStorage.meta).toStrictEqual({
       version: 54,
     });
   });
 
-  it('should retype instance of 0 decimal values to numbers [tokens]', async function () {
+  it('should retype instance of 0 decimal values to numbers [tokens]', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -53,7 +49,7 @@ describe('migration #54', function () {
     };
 
     const newStorage = await migration54.migrate(oldStorage);
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       PreferencesController: {
         tokens: [
           {
@@ -82,7 +78,7 @@ describe('migration #54', function () {
     });
   });
 
-  it('should do nothing if all decimal value typings are correct [tokens]', async function () {
+  it('should do nothing if all decimal value typings are correct [tokens]', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -115,7 +111,7 @@ describe('migration #54', function () {
     };
 
     const newStorage = await migration54.migrate(oldStorage);
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       PreferencesController: {
         tokens: [
           {
@@ -144,14 +140,14 @@ describe('migration #54', function () {
     });
   });
 
-  it('should retype instance of 0 decimal values to numbers [accountTokens]', async function () {
+  it('should retype instance of 0 decimal values to numbers [accountTokens]', async () => {
     const oldStorage = {
       meta: {},
       data: {
         PreferencesController: {
           accountTokens: {
             '0x1111': {
-              [MAINNET_CHAIN_ID]: [
+              [CHAIN_IDS.MAINNET]: [
                 {
                   address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                   decimals: '0',
@@ -175,7 +171,7 @@ describe('migration #54', function () {
               ],
             },
             '0x1112': {
-              [ROPSTEN_CHAIN_ID]: [
+              '0x3': [
                 {
                   address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                   decimals: '0',
@@ -205,11 +201,11 @@ describe('migration #54', function () {
     };
 
     const newStorage = await migration54.migrate(oldStorage);
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       PreferencesController: {
         accountTokens: {
           '0x1111': {
-            [MAINNET_CHAIN_ID]: [
+            [CHAIN_IDS.MAINNET]: [
               {
                 address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                 decimals: 0,
@@ -233,7 +229,7 @@ describe('migration #54', function () {
             ],
           },
           '0x1112': {
-            [ROPSTEN_CHAIN_ID]: [
+            '0x3': [
               {
                 address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                 decimals: 0,
@@ -262,14 +258,14 @@ describe('migration #54', function () {
     });
   });
 
-  it('should do nothing if all decimal value typings are correct [accountTokens]', async function () {
+  it('should do nothing if all decimal value typings are correct [accountTokens]', async () => {
     const oldStorage = {
       meta: {},
       data: {
         PreferencesController: {
           accountTokens: {
             '0x1111': {
-              [MAINNET_CHAIN_ID]: [
+              [CHAIN_IDS.MAINNET]: [
                 {
                   address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                   decimals: 0,
@@ -293,7 +289,7 @@ describe('migration #54', function () {
               ],
             },
             '0x1112': {
-              [ROPSTEN_CHAIN_ID]: [
+              '0x3': [
                 {
                   address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                   decimals: 0,
@@ -323,11 +319,11 @@ describe('migration #54', function () {
     };
 
     const newStorage = await migration54.migrate(oldStorage);
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       PreferencesController: {
         accountTokens: {
           '0x1111': {
-            [MAINNET_CHAIN_ID]: [
+            [CHAIN_IDS.MAINNET]: [
               {
                 address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                 decimals: 0,
@@ -351,7 +347,7 @@ describe('migration #54', function () {
             ],
           },
           '0x1112': {
-            [ROPSTEN_CHAIN_ID]: [
+            '0x3': [
               {
                 address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                 decimals: 0,
@@ -380,14 +376,14 @@ describe('migration #54', function () {
     });
   });
 
-  it('should retype instance of 0 decimal values to numbers [accountTokens and tokens]', async function () {
+  it('should retype instance of 0 decimal values to numbers [accountTokens and tokens]', async () => {
     const oldStorage = {
       meta: {},
       data: {
         PreferencesController: {
           accountTokens: {
             '0x1111': {
-              [MAINNET_CHAIN_ID]: [
+              [CHAIN_IDS.MAINNET]: [
                 {
                   address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                   decimals: '0',
@@ -411,7 +407,7 @@ describe('migration #54', function () {
               ],
             },
             '0x1112': {
-              [ROPSTEN_CHAIN_ID]: [
+              '0x3': [
                 {
                   address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                   decimals: '0',
@@ -462,11 +458,11 @@ describe('migration #54', function () {
     };
 
     const newStorage = await migration54.migrate(oldStorage);
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       PreferencesController: {
         accountTokens: {
           '0x1111': {
-            [MAINNET_CHAIN_ID]: [
+            [CHAIN_IDS.MAINNET]: [
               {
                 address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                 decimals: 0,
@@ -490,7 +486,7 @@ describe('migration #54', function () {
             ],
           },
           '0x1112': {
-            [ROPSTEN_CHAIN_ID]: [
+            '0x3': [
               {
                 address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                 decimals: 0,
@@ -540,14 +536,14 @@ describe('migration #54', function () {
     });
   });
 
-  it('should retype instance of 0 decimal values to numbers, and remove tokens with corrupted decimal values [accountTokens and tokens]', async function () {
+  it('should retype instance of 0 decimal values to numbers, and remove tokens with corrupted decimal values [accountTokens and tokens]', async () => {
     const oldStorage = {
       meta: {},
       data: {
         PreferencesController: {
           accountTokens: {
             '0x1111': {
-              [MAINNET_CHAIN_ID]: [
+              [CHAIN_IDS.MAINNET]: [
                 {
                   address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                   decimals: '',
@@ -571,7 +567,7 @@ describe('migration #54', function () {
               ],
             },
             '0x1112': {
-              [ROPSTEN_CHAIN_ID]: [
+              '0x3': [
                 {
                   address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                   decimals: '0',
@@ -622,11 +618,11 @@ describe('migration #54', function () {
     };
 
     const newStorage = await migration54.migrate(oldStorage);
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       PreferencesController: {
         accountTokens: {
           '0x1111': {
-            [MAINNET_CHAIN_ID]: [
+            [CHAIN_IDS.MAINNET]: [
               {
                 address: '0x0d8775f648430679a709e98d2b0cb6250d2887ef',
                 decimals: 18,
@@ -645,7 +641,7 @@ describe('migration #54', function () {
             ],
           },
           '0x1112': {
-            [ROPSTEN_CHAIN_ID]: [
+            '0x3': [
               {
                 address: '0x06012c8cf97bead5deae237070f9587f8e7a266d',
                 decimals: 0,

@@ -1,32 +1,36 @@
-.countdown-timer {
-  @include H7;
+@use "design-system";
 
-  font-weight: bold;
+.countdown-timer {
+  @include design-system.H7;
+
   display: flex;
   justify-content: center;
 
-  @media screen and (min-width: 576px) {
+  @include design-system.screen-sm-min {
     margin: 0;
   }
 
   &__timer-container {
     display: flex;
     padding-right: 3px;
+    color: var(--color-text-alternative);
 
     > span {
       display: flex;
+      padding-left: 4px;
     }
 
     &--warning {
       .countdown-timer__time {
-        color: $Red-500;
+        color: var(--color-error-default);
       }
     }
   }
 
   &__time {
-    @include H7;
+    @include design-system.H7;
 
+    font-weight: bold;
     width: 24px;
     margin-left: 4px;
     margin-right: 2px;

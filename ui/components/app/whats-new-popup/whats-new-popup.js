@@ -1,42 +1,32 @@
-import React, { useContext, useMemo, useRef, useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import { getCurrentLocale } from '../../../ducks/metamask/metamask';
+import { debounce } from 'lodash';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+import {
+  MetaMetricsEventCategory,
+  MetaMetricsEventName,
+} from '../../../../shared/constants/metametrics';
+import {
+  NOTIFICATION_DROP_LEDGER_FIREFOX,
+  getTranslatedUINotifications,
+} from '../../../../shared/notifications';
 import { I18nContext } from '../../../contexts/i18n';
+import { MetaMetricsContext } from '../../../contexts/metametrics';
+import { getCurrentLocale } from '../../../ducks/locale/locale';
+import { TextVariant } from '../../../helpers/constants/design-system';
 import { useEqualityCheck } from '../../../hooks/useEqualityCheck';
-import Button from '../../ui/button';
-import Popover from '../../ui/popover';
-import Typography from '../../ui/typography';
+import { useTheme } from '../../../hooks/useTheme';
+import { getSortedAnnouncementsToShow } from '../../../selectors';
 import { updateViewedNotifications } from '../../../store/actions';
-import { getTranslatedUINoficiations } from '../../../../shared/notifications';
-import { getSortedNotificationsToShow } from '../../../selectors';
-import { BUILD_QUOTE_ROUTE } from '../../../helpers/constants/routes';
-import { TYPOGRAPHY } from '../../../helpers/constants/design-system';
+import { ButtonPrimary, Text } from '../../component-library';
+import Popover from '../../ui/popover';
 
-function getActionFunctionById(id, history) {
+function getActionFunctionById(id) {
   const actionFunctions = {
-    2: () => {
-      global.platform.openTab({
-        url:
-          'https://survey.alchemer.com/s3/6173069/MetaMask-Extension-NPS-January-2021',
-      });
-    },
-    3: () => {
-      global.platform.openTab({
-        url: 'https://community.metamask.io/t/about-the-security-category/72',
-      });
-    },
-    4: () => {
-      updateViewedNotifications({ 4: true });
-      history.push(BUILD_QUOTE_ROUTE);
-    },
-    5: () => {
-      updateViewedNotifications({ 5: true });
-      global.platform.openTab({
-        url: 'https://metamask.zendesk.com/hc/en-us/articles/360060826432',
-      });
+    [NOTIFICATION_DROP_LEDGER_FIREFOX]: () => {
+      updateViewedNotifications({ [NOTIFICATION_DROP_LEDGER_FIREFOX]: true });
     },
   };
 
@@ -45,9 +35,7 @@ function getActionFunctionById(id, history) {
 
 const renderDescription = (description) => {
   if (!Array.isArray(description)) {
-    return (
-      <Typography variant={TYPOGRAPHY.Paragraph}>{description}</Typography>
-    );
+    return <Text variant={TextVariant.bodyMd}>{description}</Text>;
   }
 
   return (
@@ -55,22 +43,29 @@ const renderDescription = (description) => {
       {description.map((piece, index) => {
         const isLast = index === description.length - 1;
         return (
-          <Typography
+          <Text
+            data-testid={`whats-new-description-item-${index}`}
             key={`item-${index}`}
-            variant={TYPOGRAPHY.Paragraph}
-            boxProps={{ marginBottom: isLast ? 0 : 2 }}
+            variant={TextVariant.bodyMd}
+            marginBottom={isLast ? 0 : 4}
           >
             {piece}
-          </Typography>
+          </Text>
         );
       })}
     </>
   );
 };
 
-const renderFirstNotification = (notification, idRefMap, history, isLast) => {
+const renderFirstNotification = ({
+  notification,
+  idRefMap,
+  isLast,
+  trackEvent,
+}) => {
   const { id, date, title, description, image, actionText } = notification;
-  const actionFunction = getActionFunctionById(id, history);
+  const actionFunction = getActionFunctionById(id);
+
   const imageComponent = image && (
     <img
       className="whats-new-popup__notification-image"
@@ -80,6 +75,7 @@ const renderFirstNotification = (notification, idRefMap, history, isLast) => {
     />
   );
   const placeImageBelowDescription = image?.placeImageBelowDescription;
+
   return (
     <div
       className={classnames(
@@ -90,24 +86,32 @@ const renderFirstNotification = (notification, idRefMap, history, isLast) => {
       )}
       key={`whats-new-popop-notification-${id}`}
     >
+      <Text variant={TextVariant.bodyLgMedium} marginBottom={2}>
+        {title}
+      </Text>
       {!placeImageBelowDescription && imageComponent}
-      <div className="whats-new-popup__notification-title">{title}</div>
       <div className="whats-new-popup__description-and-date">
         <div className="whats-new-popup__notification-description">
           {renderDescription(description)}
         </div>
+
         <div className="whats-new-popup__notification-date">{date}</div>
       </div>
       {placeImageBelowDescription && imageComponent}
       {actionText && (
-        <Button
-          type="secondary"
+        <ButtonPrimary
           className="whats-new-popup__button"
-          rounded
-          onClick={actionFunction}
+          onClick={() => {
+            actionFunction();
+            trackEvent({
+              category: MetaMetricsEventCategory.Home,
+              event: MetaMetricsEventName.WhatsNewClicked,
+            });
+          }}
+          block
         >
           {actionText}
-        </Button>
+        </ButtonPrimary>
       )}
       <div
         className="whats-new-popup__intersection-observable"
@@ -117,12 +121,12 @@ const renderFirstNotification = (notification, idRefMap, history, isLast) => {
   );
 };
 
-const renderSubsequentNotification = (
+const renderSubsequentNotification = ({
   notification,
   idRefMap,
   history,
   isLast,
-) => {
+}) => {
   const { id, date, title, description, actionText } = notification;
 
   const actionFunction = getActionFunctionById(id, history);
@@ -157,10 +161,12 @@ export default function WhatsNewPopup({ onClose }) {
   const t = useContext(I18nContext);
   const history = useHistory();
 
-  const notifications = useSelector(getSortedNotificationsToShow);
+  const notifications = useSelector(getSortedAnnouncementsToShow);
   const locale = useSelector(getCurrentLocale);
+  const theme = useTheme();
 
   const [seenNotifications, setSeenNotifications] = useState({});
+  const [shouldShowScrollButton, setShouldShowScrollButton] = useState(true);
 
   const popoverRef = useRef();
 
@@ -176,6 +182,27 @@ export default function WhatsNewPopup({ onClose }) {
       ),
     [memoizedNotifications],
   );
+
+  const trackEvent = useContext(MetaMetricsContext);
+
+  const handleDebouncedScroll = debounce((target) => {
+    setShouldShowScrollButton(
+      target.scrollHeight - target.scrollTop !== target.clientHeight,
+    );
+  }, 100);
+
+  const handleScroll = (e) => {
+    handleDebouncedScroll(e.target);
+  };
+
+  const handleScrollDownClick = (e) => {
+    e.stopPropagation();
+    idRefMap[notifications[notifications.length - 1].id].current.scrollIntoView(
+      {
+        behavior: 'smooth',
+      },
+    );
+  };
 
   useEffect(() => {
     const observer = new window.IntersectionObserver(
@@ -210,29 +237,51 @@ export default function WhatsNewPopup({ onClose }) {
     };
   }, [idRefMap, setSeenNotifications]);
 
+  // Display notifications with full image
+  const notificationRenderers = {
+    // This syntax is unusual, but very helpful here.  It's equivalent to `notificationRenderers[NOTIFICATION_DROP_LEDGER_FIREFOX] =`
+    [NOTIFICATION_DROP_LEDGER_FIREFOX]: renderFirstNotification,
+  };
+
   return (
     <Popover
-      className="whats-new-popup__popover"
       title={t('whatsNew')}
+      headerProps={{ padding: [4, 4, 4] }}
+      className="whats-new-popup__popover"
       onClose={() => {
         updateViewedNotifications(seenNotifications);
+        trackEvent({
+          category: MetaMetricsEventCategory.Home,
+          event: MetaMetricsEventName.WhatsNewViewed,
+          properties: {
+            number_viewed: Object.keys(seenNotifications).pop(),
+            completed_all: true,
+          },
+        });
         onClose();
       }}
       popoverRef={popoverRef}
+      showScrollDown={shouldShowScrollButton && notifications.length > 1}
+      onScrollDownButtonClick={handleScrollDownClick}
+      onScroll={handleScroll}
     >
       <div className="whats-new-popup__notifications">
         {notifications.map(({ id }, index) => {
-          const notification = getTranslatedUINoficiations(t, locale)[id];
+          const notification = getTranslatedUINotifications(t, locale, theme)[
+            id
+          ];
           const isLast = index === notifications.length - 1;
-          // Display the swaps notification with full image
-          return index === 0 || id === 1
-            ? renderFirstNotification(notification, idRefMap, history, isLast)
-            : renderSubsequentNotification(
-                notification,
-                idRefMap,
-                history,
-                isLast,
-              );
+          // Choose the appropriate rendering function based on the id
+          const renderNotification =
+            notificationRenderers[id] || renderSubsequentNotification;
+
+          return renderNotification({
+            notification,
+            idRefMap,
+            history,
+            isLast,
+            trackEvent,
+          });
         })}
       </div>
     </Popover>

@@ -1,6 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+/**
+ * @deprecated This has been deprecated in favor of the `<Icon />` component in ./ui/components/component-library/icon/icon.js
+ * See storybook documentation for Icon here https://metamask.github.io/metamask-storybook/?path=/docs/components-componentlibrary-icon--default-story#icon
+ */
+
 export default function BuyIcon({
   width = '17',
   height = '21',
@@ -31,7 +36,16 @@ export default function BuyIcon({
 }
 
 BuyIcon.propTypes = {
+  /**
+   * Width of the icon
+   */
   width: PropTypes.string,
+  /**
+   * Height of the icon
+   */
   height: PropTypes.string,
+  /**
+   * Fill  of the icon should be a valid design system color
+   */
   fill: PropTypes.string,
 };

@@ -1,7 +1,11 @@
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { getAddressBookEntry } from '../../../../selectors';
+import {
+  getAddressBookEntry,
+  getInternalAccountByAddress,
+} from '../../../../selectors';
+import { getProviderConfig } from '../../../../ducks/metamask/metamask';
 import {
   CONTACT_VIEW_ROUTE,
   CONTACT_LIST_ROUTE,
@@ -9,7 +13,6 @@ import {
 import {
   addToAddressBook,
   removeFromAddressBook,
-  setAccountLabel,
 } from '../../../../store/actions';
 import EditContact from './edit-contact.component';
 
@@ -22,11 +25,12 @@ const mapStateToProps = (state, ownProps) => {
     ? pathNameTail.toLowerCase()
     : ownProps.match.params.id;
 
-  const contact =
-    getAddressBookEntry(state, address) || state.metamask.identities[address];
-  const { memo, name } = contact || {};
+  const contact = getAddressBookEntry(state, address);
+  const { memo } = contact || {};
+  const name =
+    contact?.name || getInternalAccountByAddress(state, address)?.metadata.name;
 
-  const { chainId } = state.metamask.provider;
+  const { chainId } = getProviderConfig(state);
 
   return {
     address: contact ? address : null,
@@ -44,8 +48,6 @@ const mapDispatchToProps = (dispatch) => {
       dispatch(addToAddressBook(recipient, nickname, memo)),
     removeFromAddressBook: (chainId, addressToRemove) =>
       dispatch(removeFromAddressBook(chainId, addressToRemove)),
-    setAccountLabel: (address, label) =>
-      dispatch(setAccountLabel(address, label)),
   };
 };
 

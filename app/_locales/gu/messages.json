@@ -1,4 +1,7 @@
 {
+  "QRHardwareSignRequestCancel": {
+    "message": "નકારો"
+  },
   "about": {
     "message": "વિશે"
   },
@@ -11,6 +14,14 @@
   "appName": {
     "message": "MetaMask",
     "description": "The name of the application"
+  },
+  "appNameBeta": {
+    "message": "MetaMask Beta",
+    "description": "The name of the application (Beta)"
+  },
+  "appNameFlask": {
+    "message": "MetaMask Flask",
+    "description": "The name of the application (Flask)"
   },
   "back": {
     "message": "પાછળ"
@@ -36,6 +47,9 @@
   "create": {
     "message": "બનાવો"
   },
+  "custom": {
+    "message": "વિગતવાર"
+  },
   "delete": {
     "message": "કાઢી નાખો"
   },
@@ -53,9 +67,6 @@
   },
   "forgetDevice": {
     "message": "આ ઉપકરણને ભૂલી જાઓ"
-  },
-  "getStarted": {
-    "message": "પ્રારંભ કરો"
   },
   "hide": {
     "message": "છુપાવો"
@@ -92,9 +103,6 @@
   "password": {
     "message": "પાસવર્ડ"
   },
-  "queue": {
-    "message": "કતારમાં"
-  },
   "reject": {
     "message": "નકારો"
   },
@@ -122,9 +130,6 @@
   "settings": {
     "message": "સેટિંગ્સ"
   },
-  "slow": {
-    "message": "ધીમું"
-  },
   "tryAgain": {
     "message": "ફરી પ્રયાસ કરો"
   },
@@ -136,8 +141,5 @@
   },
   "userName": {
     "message": "વપરાશકર્તાનામ"
-  },
-  "viewAccount": {
-    "message": "એકાઉન્ટ જુઓ"
   }
 }

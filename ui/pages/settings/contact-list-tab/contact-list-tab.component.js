@@ -1,11 +1,23 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import classnames from 'classnames';
 import ContactList from '../../../components/app/contact-list';
 import {
   CONTACT_ADD_ROUTE,
+  CONTACT_LIST_ROUTE,
   CONTACT_VIEW_ROUTE,
 } from '../../../helpers/constants/routes';
-import Button from '../../../components/ui/button';
+import {
+  getNumberOfSettingRoutesInTab,
+  handleSettingsRefs,
+} from '../../../helpers/utils/settings-search';
+import {
+  ButtonPrimary,
+  Icon,
+  IconName,
+  IconSize,
+} from '../../../components/component-library';
+import { IconColor, Size } from '../../../helpers/constants/design-system';
 import EditContact from './edit-contact';
 import AddContact from './add-contact';
 import ViewContact from './view-contact';
@@ -22,9 +34,27 @@ export default class ContactListTab extends Component {
     viewingContact: PropTypes.bool,
     editingContact: PropTypes.bool,
     addingContact: PropTypes.bool,
-    showContactContent: PropTypes.bool,
     hideAddressBook: PropTypes.bool,
+    currentPath: PropTypes.string,
   };
+
+  settingsRefs = Array(
+    getNumberOfSettingRoutesInTab(this.context.t, this.context.t('contacts')),
+  )
+    .fill(undefined)
+    .map(() => {
+      return React.createRef();
+    });
+
+  componentDidUpdate() {
+    const { t } = this.context;
+    handleSettingsRefs(t, t('contacts'), this.settingsRefs);
+  }
+
+  componentDidMount() {
+    const { t } = this.context;
+    handleSettingsRefs(t, t('contacts'), this.settingsRefs);
+  }
 
   renderAddresses() {
     const { addressBook, history, selectedAddress } = this.props;
@@ -49,7 +79,12 @@ export default class ContactListTab extends Component {
     return (
       <div className="address-book__container">
         <div>
-          <img src="./images/address-book.svg" alt={t('addressBookIcon')} />
+          <Icon
+            name={IconName.Book}
+            color={IconColor.iconMuted}
+            className="address-book__icon"
+            size={IconSize.Xl}
+          />
           <h4 className="address-book__title">{t('buildContactList')}</h4>
           <p className="address-book__sub-title">
             {t('addFriendsAndAddresses')}
@@ -68,35 +103,27 @@ export default class ContactListTab extends Component {
   }
 
   renderAddButton() {
-    const { history } = this.props;
+    const { history, viewingContact, editingContact } = this.props;
 
     return (
-      <div className="address-book-add-button">
-        <Button
-          className="address-book-add-button__button"
-          type="secondary"
-          rounded
-          onClick={() => {
-            history.push(CONTACT_ADD_ROUTE);
-          }}
-        >
-          {this.context.t('addContact')}
-        </Button>
-      </div>
+      <ButtonPrimary
+        className={classnames('address-book-add-button__button', {
+          'address-book-add-button__button--hidden':
+            viewingContact || editingContact,
+        })}
+        onClick={() => {
+          history.push(CONTACT_ADD_ROUTE);
+        }}
+        margin={4}
+        size={Size.LG}
+      >
+        {this.context.t('addContact')}
+      </ButtonPrimary>
     );
   }
 
   renderContactContent() {
-    const {
-      viewingContact,
-      editingContact,
-      addingContact,
-      showContactContent,
-    } = this.props;
-
-    if (!showContactContent) {
-      return null;
-    }
+    const { viewingContact, editingContact, addingContact } = this.props;
 
     let ContactContentComponent = null;
     if (viewingContact) {
@@ -120,19 +147,27 @@ export default class ContactListTab extends Component {
     const { hideAddressBook } = this.props;
 
     if (!hideAddressBook) {
-      return <div className="address-book">{this.renderAddresses()}</div>;
+      return (
+        <div ref={this.settingsRefs[0]} className="address-book">
+          {this.renderAddresses()}
+        </div>
+      );
     }
     return null;
   }
 
   render() {
-    const { addingContact, addressBook } = this.props;
+    const { addingContact, addressBook, currentPath } = this.props;
 
     return (
       <div className="address-book-wrapper">
         {this.renderAddressBookContent()}
         {this.renderContactContent()}
-        {!addingContact && addressBook.length > 0 && this.renderAddButton()}
+        {currentPath === CONTACT_LIST_ROUTE &&
+        !addingContact &&
+        addressBook.length > 0
+          ? this.renderAddButton()
+          : null}
       </div>
     );
   }

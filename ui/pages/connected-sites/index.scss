@@ -1,3 +1,5 @@
+@use "design-system";
+
 .connected-sites {
   h2 {
     text-overflow: ellipsis;
@@ -24,11 +26,14 @@
     margin-top: 15px;
   }
 
-  a,
-  a:hover {
-    @include H6;
+  a {
+    @include design-system.H6;
 
-    color: $primary-blue;
+    color: var(--color-primary-default);
     cursor: pointer;
+  }
+
+  a:hover {
+    color: var(--color-primary-alternative);
   }
 }

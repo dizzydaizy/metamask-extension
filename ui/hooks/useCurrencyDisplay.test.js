@@ -1,11 +1,10 @@
+import React from 'react';
 import { renderHook } from '@testing-library/react-hooks';
-import * as reactRedux from 'react-redux';
-import sinon from 'sinon';
-import { getCurrentCurrency } from '../selectors';
-import {
-  getConversionRate,
-  getNativeCurrency,
-} from '../ducks/metamask/metamask';
+import { Provider } from 'react-redux';
+
+import mockState from '../../test/data/mock-state.json';
+import configureStore from '../store/store';
+
 import { useCurrencyDisplay } from './useCurrencyDisplay';
 
 const tests = [
@@ -96,25 +95,56 @@ const tests = [
       displayValue: '0.000000001',
     },
   },
+  {
+    input: {
+      value: '0x105cb88',
+      currency: 'ETH',
+      numberOfDecimals: 100,
+    },
+    result: {
+      value: '<0.000001',
+      suffix: 'ETH',
+      displayValue: '<0.000001 ETH',
+    },
+  },
+  {
+    input: {
+      value: '0x105cb88',
+      currency: 'ETH',
+      numberOfDecimals: 100,
+      hideLabel: true,
+    },
+    result: {
+      value: '<0.000001',
+      suffix: undefined,
+      displayValue: '<0.000001',
+    },
+  },
 ];
+
+const renderUseCurrencyDisplay = (value, restProps) => {
+  const state = {
+    ...mockState,
+    metamask: {
+      ...mockState.metamask,
+      completedOnboarding: true,
+      currentCurrency: 'usd',
+      currencyRates: { ETH: { conversionRate: 280.45 } },
+    },
+  };
+
+  const wrapper = ({ children }) => (
+    <Provider store={configureStore(state)}>{children}</Provider>
+  );
+
+  return renderHook(() => useCurrencyDisplay(value, restProps), { wrapper });
+};
 
 describe('useCurrencyDisplay', () => {
   tests.forEach(({ input: { value, ...restProps }, result }) => {
     describe(`when input is { value: ${value}, decimals: ${restProps.numberOfDecimals}, denomation: ${restProps.denomination} }`, () => {
-      const stub = sinon.stub(reactRedux, 'useSelector');
-      stub.callsFake((selector) => {
-        if (selector === getCurrentCurrency) {
-          return 'usd';
-        } else if (selector === getNativeCurrency) {
-          return 'ETH';
-        } else if (selector === getConversionRate) {
-          return 280.45;
-        }
-        return undefined;
-      });
-      const hookReturn = renderHook(() => useCurrencyDisplay(value, restProps));
+      const hookReturn = renderUseCurrencyDisplay(value, restProps);
       const [displayValue, parts] = hookReturn.result.current;
-      stub.restore();
       it(`should return ${result.displayValue} as displayValue`, () => {
         expect(displayValue).toStrictEqual(result.displayValue);
       });

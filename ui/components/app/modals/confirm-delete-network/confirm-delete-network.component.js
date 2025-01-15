@@ -5,24 +5,25 @@ import Modal, { ModalContent } from '../../modal';
 export default class ConfirmDeleteNetwork extends PureComponent {
   static propTypes = {
     hideModal: PropTypes.func.isRequired,
-    delRpcTarget: PropTypes.func.isRequired,
+    removeNetwork: PropTypes.func.isRequired,
     onConfirm: PropTypes.func.isRequired,
-    target: PropTypes.string.isRequired,
+    networkNickname: PropTypes.string.isRequired,
+    chainId: PropTypes.string.isRequired,
   };
 
   static contextTypes = {
     t: PropTypes.func,
   };
 
-  handleDelete = () => {
-    this.props.delRpcTarget(this.props.target).then(() => {
-      this.props.onConfirm();
-      this.props.hideModal();
-    });
+  handleDelete = async () => {
+    await this.props.removeNetwork(this.props.chainId);
+    this.props.onConfirm();
+    this.props.hideModal();
   };
 
   render() {
     const { t } = this.context;
+    const { networkNickname } = this.props;
 
     return (
       <Modal
@@ -30,11 +31,12 @@ export default class ConfirmDeleteNetwork extends PureComponent {
         onCancel={() => this.props.hideModal()}
         submitText={t('delete')}
         cancelText={t('cancel')}
-        submitType="danger"
+        submitType="danger-primary"
+        testId="confirm-delete-network-modal"
       >
         <ModalContent
-          title={t('deleteNetwork')}
-          description={t('deleteNetworkDescription')}
+          title={t('deleteNetworkTitle', [networkNickname])}
+          description={t('deleteNetworkIntro')}
         />
       </Modal>
     );

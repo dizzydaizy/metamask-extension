@@ -1,1 +1,2 @@
-export { default } from './createMethodMiddleware';
+export * from './createMethodMiddleware';
+export * from './createUnsupportedMethodMiddleware';

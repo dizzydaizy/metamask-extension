@@ -1,17 +1,26 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import TokenTracker from '@metamask/eth-token-tracker';
-import { useSelector } from 'react-redux';
-import { getCurrentChainId, getSelectedAddress } from '../selectors';
+import { shallowEqual, useSelector } from 'react-redux';
+import { getSelectedInternalAccount } from '../selectors';
 import { SECOND } from '../../shared/constants/time';
+import { isEqualCaseInsensitive } from '../../shared/modules/string-utils';
+import { getProviderConfig } from '../ducks/metamask/metamask';
 import { useEqualityCheck } from './useEqualityCheck';
 
-export function useTokenTracker(
+export function useTokenTracker({
   tokens,
+  address,
   includeFailedTokens = false,
   hideZeroBalanceTokens = false,
-) {
-  const chainId = useSelector(getCurrentChainId);
-  const userAddress = useSelector(getSelectedAddress);
+}) {
+  const { chainId, rpcUrl } = useSelector(getProviderConfig);
+  const { address: selectedAddress } = useSelector(
+    getSelectedInternalAccount,
+    shallowEqual,
+  );
+
+  const userAddress = address ?? selectedAddress;
+
   const [loading, setLoading] = useState(() => tokens?.length >= 0);
   const [tokensWithBalances, setTokensWithBalances] = useState([]);
   const [error, setError] = useState(null);
@@ -26,10 +35,14 @@ export function useTokenTracker(
       // TODO: improve this pattern for adding this field when we improve support for
       // EIP721 tokens.
       const matchingTokensWithIsERC721Flag = matchingTokens.map((token) => {
-        const additionalTokenData = memoizedTokens.find(
-          (t) => t.address === token.address,
+        const additionalTokenData = memoizedTokens.find((t) =>
+          isEqualCaseInsensitive(t.address, token.address),
         );
-        return { ...token, isERC721: additionalTokenData?.isERC721 };
+        return {
+          ...token,
+          isERC721: additionalTokenData?.isERC721,
+          image: additionalTokenData?.image,
+        };
       });
       setTokensWithBalances(matchingTokensWithIsERC721Flag);
       setLoading(false);
@@ -53,15 +66,16 @@ export function useTokenTracker(
   }, []);
 
   const buildTracker = useCallback(
-    (address, tokenList) => {
+    (usersAddress, tokenList) => {
       // clear out previous tracker, if it exists.
       teardownTracker();
       tokenTracker.current = new TokenTracker({
-        userAddress: address,
+        userAddress: usersAddress,
         provider: global.ethereumProvider,
         tokens: tokenList,
         includeFailedTokens,
         pollingInterval: SECOND * 8,
+        balanceDecimals: 5,
       });
 
       tokenTracker.current.on('update', updateBalances);
@@ -84,8 +98,9 @@ export function useTokenTracker(
   useEffect(() => {
     // This effect will only run initially and when:
     // 1. chainId is updated,
-    // 2. userAddress is changed,
-    // 3. token list is updated and not equal to previous list
+    // 2. rpc url is changd,
+    // 3. userAddress is changed,
+    // 4. token list is updated and not equal to previous list
     // in any of these scenarios, we should indicate to the user that their token
     // values are in the process of updating by setting loading state.
     setLoading(true);
@@ -108,6 +123,7 @@ export function useTokenTracker(
     userAddress,
     teardownTracker,
     chainId,
+    rpcUrl,
     memoizedTokens,
     updateBalances,
     buildTracker,

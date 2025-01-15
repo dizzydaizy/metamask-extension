@@ -10,14 +10,17 @@ export default class Tooltip extends PureComponent {
     html: null,
     interactive: undefined,
     onHidden: null,
+    distance: 0,
     position: 'left',
     offset: 0,
+    open: undefined,
     size: 'small',
     title: null,
     trigger: 'mouseenter focus',
     wrapperClassName: undefined,
     theme: '',
     tag: 'div',
+    wrapperStyle: {},
   };
 
   static propTypes = {
@@ -26,15 +29,18 @@ export default class Tooltip extends PureComponent {
     containerClassName: PropTypes.string,
     disabled: PropTypes.bool,
     html: PropTypes.node,
+    distance: PropTypes.number,
     interactive: PropTypes.bool,
     offset: PropTypes.number,
     onHidden: PropTypes.func,
+    open: PropTypes.bool,
     position: PropTypes.oneOf(['top', 'right', 'bottom', 'left']),
     size: PropTypes.oneOf(['small', 'regular', 'big']),
     title: PropTypes.string,
     trigger: PropTypes.any,
     wrapperClassName: PropTypes.string,
     style: PropTypes.object,
+    wrapperStyle: PropTypes.object,
     theme: PropTypes.string,
     tabIndex: PropTypes.number,
     tag: PropTypes.string,
@@ -50,12 +56,15 @@ export default class Tooltip extends PureComponent {
       html,
       interactive,
       size,
+      distance,
       title,
       trigger,
       onHidden,
       offset,
+      open,
       wrapperClassName,
       style,
+      wrapperStyle,
       theme,
       tabIndex,
       tag,
@@ -67,12 +76,13 @@ export default class Tooltip extends PureComponent {
 
     return React.createElement(
       tag,
-      { className: wrapperClassName },
+      { className: wrapperClassName, style: wrapperStyle },
       <ReactTippy
         arrow={arrow}
         className={containerClassName}
         disabled={disabled}
         hideOnClick={false}
+        distance={distance}
         html={html}
         interactive={interactive}
         onHidden={onHidden}
@@ -80,9 +90,10 @@ export default class Tooltip extends PureComponent {
         size={size}
         offset={offset}
         style={style}
-        title={title}
+        title={disabled ? '' : title}
         trigger={trigger}
-        theme={theme}
+        open={open}
+        theme={`tippy-tooltip--mm-custom ${theme}`} // Required for correct theming
         tabIndex={tabIndex || 0}
         tag={tag}
       >

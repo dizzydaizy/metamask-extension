@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
-import Identicon from '../../../../components/ui/identicon';
 import Button from '../../../../components/ui/button/button.component';
 import TextField from '../../../../components/ui/text-field';
 import PageContainerFooter from '../../../../components/ui/page-container/page-container-footer';
@@ -9,6 +8,19 @@ import {
   isBurnAddress,
   isValidHexAddress,
 } from '../../../../../shared/modules/hexstring-utils';
+import {
+  AvatarAccount,
+  AvatarAccountSize,
+  Box,
+  Text,
+} from '../../../../components/component-library';
+
+import {
+  AlignItems,
+  BlockSize,
+  Display,
+  TextVariant,
+} from '../../../../helpers/constants/design-system';
 
 export default class EditContact extends PureComponent {
   static contextTypes = {
@@ -25,8 +37,6 @@ export default class EditContact extends PureComponent {
     memo: PropTypes.string,
     viewRoute: PropTypes.string,
     listRoute: PropTypes.string,
-    setAccountLabel: PropTypes.func,
-    showingMyAccounts: PropTypes.bool.isRequired,
   };
 
   static defaultProps = {
@@ -52,8 +62,6 @@ export default class EditContact extends PureComponent {
       memo,
       name,
       removeFromAddressBook,
-      setAccountLabel,
-      showingMyAccounts,
       viewRoute,
     } = this.props;
 
@@ -63,21 +71,43 @@ export default class EditContact extends PureComponent {
 
     return (
       <div className="settings-page__content-row address-book__edit-contact">
-        <div className="settings-page__header address-book__header--edit">
-          <Identicon address={address} diameter={60} />
-          {showingMyAccounts ? null : (
+        <Box
+          className="settings-page__header address-book__header--edit"
+          paddingLeft={6}
+          paddingRight={6}
+          width={BlockSize.Full}
+          alignItems={AlignItems.center}
+        >
+          <Box
+            display={Display.Flex}
+            alignItems={AlignItems.center}
+            style={{ overflow: 'hidden' }}
+            paddingRight={2}
+          >
+            <AvatarAccount size={AvatarAccountSize.Lg} address={address} />
+            <Text
+              className="address-book__header__name"
+              variant={TextVariant.bodyLgMedium}
+              marginInlineStart={4}
+              style={{ overflow: 'hidden' }}
+              ellipsis
+            >
+              {name || address}
+            </Text>
+          </Box>
+          <Box className="settings-page__address-book-button">
             <Button
               type="link"
-              className="settings-page__address-book-button"
               onClick={async () => {
                 await removeFromAddressBook(chainId, address);
                 history.push(listRoute);
               }}
+              style={{ display: 'contents' }}
             >
-              {t('deleteAccount')}
+              {t('deleteContact')}
             </Button>
-          )}
-        </div>
+          </Box>
+        </Box>
         <div className="address-book__edit-contact__content">
           <div className="address-book__view-contact__group">
             <div className="address-book__view-contact__group__label">
@@ -105,7 +135,14 @@ export default class EditContact extends PureComponent {
               error={this.state.error}
               onChange={(e) => this.setState({ newAddress: e.target.value })}
               fullWidth
+              multiline
+              rows={4}
               margin="dense"
+              classes={{
+                inputMultiline:
+                  'address-book__view-contact__address__text-area',
+                inputRoot: 'address-book__view-contact__address',
+              }}
             />
           </div>
 
@@ -150,12 +187,6 @@ export default class EditContact extends PureComponent {
                   this.state.newName || name,
                   this.state.newMemo || memo,
                 );
-                if (showingMyAccounts) {
-                  setAccountLabel(
-                    this.state.newAddress,
-                    this.state.newName || name,
-                  );
-                }
                 history.push(listRoute);
               } else {
                 this.setState({ error: this.context.t('invalidAddress') });
@@ -167,9 +198,6 @@ export default class EditContact extends PureComponent {
                 this.state.newName || name,
                 this.state.newMemo || memo,
               );
-              if (showingMyAccounts) {
-                setAccountLabel(address, this.state.newName || name);
-              }
               history.push(listRoute);
             }
           }}
@@ -177,7 +205,12 @@ export default class EditContact extends PureComponent {
             history.push(`${viewRoute}/${address}`);
           }}
           submitText={this.context.t('save')}
-          submitButtonType="confirm"
+          disabled={
+            (this.state.newName === name &&
+              this.state.newAddress === address &&
+              this.state.newMemo === memo) ||
+            !this.state.newName.trim()
+          }
         />
       </div>
     );
