@@ -1,4 +1,7 @@
 {
+  "QRHardwareSignRequestCancel": {
+    "message": "తిరస్కరించు"
+  },
   "about": {
     "message": "గురించి"
   },
@@ -11,6 +14,14 @@
   "appName": {
     "message": "MetaMask",
     "description": "The name of the application"
+  },
+  "appNameBeta": {
+    "message": "MetaMask Beta",
+    "description": "The name of the application (Beta)"
+  },
+  "appNameFlask": {
+    "message": "MetaMask Flask",
+    "description": "The name of the application (Flask)"
   },
   "back": {
     "message": "వెనుకకు"
@@ -36,6 +47,9 @@
   "create": {
     "message": "సృష్టించు"
   },
+  "custom": {
+    "message": "ఆధునిక"
+  },
   "delete": {
     "message": "తొలగించు"
   },
@@ -53,9 +67,6 @@
   },
   "forgetDevice": {
     "message": "ఈ పరికరాన్ని విస్మరించు"
-  },
-  "getStarted": {
-    "message": "ప్రారంభించండి"
   },
   "hide": {
     "message": "దాచిపెట్టు"
@@ -92,9 +103,6 @@
   "password": {
     "message": "పాస్‌వర్డ్"
   },
-  "queue": {
-    "message": "క్రమ వరుస"
-  },
   "reject": {
     "message": "తిరస్కరించు"
   },
@@ -122,9 +130,6 @@
   "settings": {
     "message": "సెట్టింగ్‌లు"
   },
-  "slow": {
-    "message": "నెమ్మదిగా"
-  },
   "tryAgain": {
     "message": "మళ్లీ ప్రయత్నించు"
   },
@@ -136,8 +141,5 @@
   },
   "userName": {
     "message": "యూజర్‌పేరు"
-  },
-  "viewAccount": {
-    "message": "ఖాతాను వీక్షించండి"
   }
 }

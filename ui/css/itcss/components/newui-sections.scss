@@ -1,5 +1,4 @@
-$sub-mid-size-breakpoint: 667px;
-$sub-mid-size-breakpoint-range: "screen and (min-width: #{$break-large}) and (max-width: #{$sub-mid-size-breakpoint})";
+@use "design-system";
 
 /*
   NewUI Container Elements
@@ -22,7 +21,7 @@ $sub-mid-size-breakpoint-range: "screen and (min-width: #{$break-large}) and (ma
   left: 0;
   width: 1px;
   height: 1px;
-  background-color: $Grey-000;
+  background-color: var(--color-background-alternative);
   animation: emptySpinningDiv 1s infinite linear;
 }
 
@@ -33,7 +32,7 @@ $sub-mid-size-breakpoint-range: "screen and (min-width: #{$break-large}) and (ma
 
 // Main container
 .main-container {
-  z-index: $main-container-z-index;
+  z-index: design-system.$main-container-z-index;
 }
 
 .main-container::-webkit-scrollbar {
@@ -50,7 +49,7 @@ $sub-mid-size-breakpoint-range: "screen and (min-width: #{$break-large}) and (ma
 
 // main-container media queries
 
-@media screen and (min-width: 576px) {
+@include design-system.screen-sm-min {
   .lap-visible {
     display: flex;
   }
@@ -61,29 +60,28 @@ $sub-mid-size-breakpoint-range: "screen and (min-width: #{$break-large}) and (ma
 
   .main-container {
     width: 85vw;
-    margin-bottom: 10vh;
     min-height: 90vh;
-    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-size-xs) var(--color-shadow-default);
   }
 }
 
-@media screen and (min-width: 769px) {
+@include design-system.screen-md-min {
   .main-container {
     width: 80vw;
     min-height: 82vh;
-    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-size-xs) var(--color-shadow-default);
   }
 }
 
-@media screen and (min-width: 1281px) {
+@include design-system.screen-lg-min {
   .main-container {
     width: 62vw;
     min-height: 82vh;
-    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-size-xs) var(--color-shadow-default);
   }
 }
 
-@media screen and (max-width: 575px) {
+@include design-system.screen-sm-max {
   .lap-visible {
     display: none;
   }
@@ -95,7 +93,7 @@ $sub-mid-size-breakpoint-range: "screen and (min-width: #{$break-large}) and (ma
   .main-container {
     width: 100%;
     overflow-y: auto;
-    background-color: $white;
+    background-color: var(--color-background-default);
   }
 
   .main-container-wrapper {
@@ -117,30 +115,30 @@ $sub-mid-size-breakpoint-range: "screen and (min-width: #{$break-large}) and (ma
   flex-direction: row-reverse;
   justify-content: space-between;
 
-  @media screen and (max-width: 575px) {
+  @include design-system.screen-sm-max {
     height: 100%;
   }
 
-  @media screen and (min-width: 576px) {
+  @include design-system.screen-sm-min {
     width: 85vw;
   }
 
-  @media screen and (min-width: 769px) {
+  @include design-system.screen-md-min {
     width: 80vw;
   }
 
-  @media screen and (min-width: 1281px) {
+  @include design-system.screen-lg-min {
     width: 62vw;
   }
 }
 
 .unlock-screen-container {
-  z-index: $main-container-z-index;
+  z-index: design-system.$main-container-z-index;
   display: flex;
   justify-content: center;
   align-items: center;
   flex: 1 0 auto;
-  background: #f7f7f7;
+  background: var(--color-background-alternative);
   width: 100%;
 }
 
@@ -158,5 +156,5 @@ $sub-mid-size-breakpoint-range: "screen and (min-width: #{$break-large}) and (ma
   height: 100%;
   justify-content: center;
   padding: 0 10px;
-  background: white;
+  background: var(--color-background-default);
 }

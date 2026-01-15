@@ -1,60 +1,76 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 
+import { useHistory } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { I18nContext } from '../../../contexts/i18n';
 import { Menu, MenuItem } from '../../../components/ui/menu';
+import { getBlockExplorerLinkText } from '../../../selectors';
+import { NETWORKS_ROUTE } from '../../../helpers/constants/routes';
+import {
+  ButtonIcon,
+  ButtonIconSize,
+  IconName,
+} from '../../../components/component-library';
+import { Color } from '../../../helpers/constants/design-system';
 
 const AssetOptions = ({
   onRemove,
   onClickBlockExplorer,
-  onViewAccountDetails,
+  onViewTokenDetails,
   tokenSymbol,
   isNativeAsset,
-  isEthNetwork,
 }) => {
   const t = useContext(I18nContext);
-  const [assetOptionsButtonElement, setAssetOptionsButtonElement] = useState(
-    null,
-  );
   const [assetOptionsOpen, setAssetOptionsOpen] = useState(false);
+  const history = useHistory();
+  const blockExplorerLinkText = useSelector(getBlockExplorerLinkText);
+  const ref = useRef(false);
+
+  const routeToAddBlockExplorerUrl = () => {
+    history.push(`${NETWORKS_ROUTE}#blockExplorerUrl`);
+  };
+
+  const openBlockExplorer = () => {
+    setAssetOptionsOpen(false);
+    onClickBlockExplorer();
+  };
 
   return (
-    <>
-      <button
-        className="fas fa-ellipsis-v asset-options__button"
+    <div ref={ref}>
+      <ButtonIcon
+        className="asset-options__button"
         data-testid="asset-options__button"
         onClick={() => setAssetOptionsOpen(true)}
-        ref={setAssetOptionsButtonElement}
-        title={t('assetOptions')}
+        ariaLabel={t('assetOptions')}
+        iconName={IconName.MoreVertical}
+        color={Color.textDefault}
+        size={ButtonIconSize.Sm}
       />
       {assetOptionsOpen ? (
         <Menu
-          anchorElement={assetOptionsButtonElement}
+          anchorElement={ref.current}
           onHide={() => setAssetOptionsOpen(false)}
         >
           <MenuItem
-            iconClassName="fas fa-qrcode"
-            data-testid="asset-options__account-details"
-            onClick={() => {
-              setAssetOptionsOpen(false);
-              onViewAccountDetails();
-            }}
-          >
-            {t('accountDetails')}
-          </MenuItem>
-          <MenuItem
-            iconClassName="fas fa-external-link-alt asset-options__icon"
+            iconName={IconName.Export}
             data-testid="asset-options__etherscan"
-            onClick={() => {
-              setAssetOptionsOpen(false);
-              onClickBlockExplorer();
-            }}
+            onClick={
+              blockExplorerLinkText.firstPart === 'addBlockExplorer'
+                ? routeToAddBlockExplorerUrl
+                : openBlockExplorer
+            }
           >
-            {isEthNetwork ? t('viewOnEtherscan') : t('viewinExplorer')}
+            {t(
+              blockExplorerLinkText.firstPart,
+              blockExplorerLinkText.secondPart === ''
+                ? null
+                : [t('blockExplorerAssetAction')],
+            )}
           </MenuItem>
           {isNativeAsset ? null : (
             <MenuItem
-              iconClassName="fas fa-trash-alt asset-options__icon"
+              iconName={IconName.Trash}
               data-testid="asset-options__hide"
               onClick={() => {
                 setAssetOptionsOpen(false);
@@ -64,19 +80,49 @@ const AssetOptions = ({
               {t('hideTokenSymbol', [tokenSymbol])}
             </MenuItem>
           )}
+          {isNativeAsset || !onViewTokenDetails ? null : (
+            <MenuItem
+              iconName={IconName.Info}
+              data-testid="asset-options__token-details"
+              onClick={() => {
+                setAssetOptionsOpen(false);
+                onViewTokenDetails();
+              }}
+            >
+              {t('tokenDetails')}
+            </MenuItem>
+          )}
         </Menu>
       ) : null}
-    </>
+    </div>
   );
 };
 
+const isNotFunc = (p) => {
+  return typeof p !== 'function';
+};
+
 AssetOptions.propTypes = {
-  isEthNetwork: PropTypes.bool,
   isNativeAsset: PropTypes.bool,
-  onRemove: PropTypes.func.isRequired,
   onClickBlockExplorer: PropTypes.func.isRequired,
-  onViewAccountDetails: PropTypes.func.isRequired,
-  tokenSymbol: PropTypes.string,
+  onRemove: (props) => {
+    if (props.isNativeAsset === false && isNotFunc(props.onRemove)) {
+      throw new Error(
+        'When isNativeAsset is true, onRemove is a required prop',
+      );
+    }
+  },
+  onViewTokenDetails: PropTypes.func,
+  tokenSymbol: (props) => {
+    if (
+      props.isNativeAsset === false &&
+      typeof props.tokenSymbol !== 'string'
+    ) {
+      throw new Error(
+        'When isNativeAsset is true, tokenSymbol is a required prop',
+      );
+    }
+  },
 };
 
 export default AssetOptions;

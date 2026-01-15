@@ -1,6 +1,8 @@
+@use "design-system";
+
 .unconnected-account-alert {
   &__content {
-    border-radius: 0;
+    border-radius: 0 !important; // To override the box border radius because of popover
   }
 
   &__footer {
@@ -17,21 +19,20 @@
   }
 
   & &__dismiss-button {
-    background: $primary-blue;
-    color: white;
+    background: var(--color-primary-default);
+    color: var(--color-primary-inverse);
     height: 40px;
     width: 100px;
     border: 0;
-    border-radius: 100px;
   }
 
   &__error {
-    @include H6;
+    @include design-system.H6;
 
     margin-bottom: 16px;
     padding: 16px;
-    border: 1px solid $accent-red;
-    background: #f8eae8;
+    border: 1px solid var(--color-error-default);
+    background: var(--color-error-muted);
     border-radius: 3px;
   }
 
@@ -44,16 +45,17 @@
 
   &__checkbox {
     margin-right: 8px;
-    padding-top: 1px; // better alignment with rest of content
+    margin-top: -2px;
   }
 
   &__checkbox-label {
-    @include H7;
+    @include design-system.H7;
 
     display: flex;
     margin-top: auto;
     margin-bottom: auto;
-    color: $Grey-500;
+    color: var(--color-text-alternative);
+    align-items: center;
   }
 
   &__checkbox-label-tooltip {

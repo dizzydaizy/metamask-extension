@@ -1,34 +1,111 @@
-import handlers from './handlers';
+import { permissionRpcMethods } from '@metamask/permission-controller';
+import { rpcErrors } from '@metamask/rpc-errors';
+import { selectHooks } from '@metamask/snaps-rpc-methods';
+import { hasProperty } from '@metamask/utils';
+import { handlers as localHandlers, legacyHandlers } from './handlers';
 
-const handlerMap = handlers.reduce((map, handler) => {
-  for (const methodName of handler.methodNames) {
-    map.set(methodName, handler.implementation);
-  }
-  return map;
-}, new Map());
+const allHandlers = [...localHandlers, ...permissionRpcMethods.handlers];
+
+// The primary home of RPC method implementations in MetaMask. MUST be subsequent
+// to our permissioning logic in the JSON-RPC middleware pipeline.
+export const createMethodMiddleware = makeMethodMiddlewareMaker(allHandlers);
+
+// A collection of RPC method implementations that, for legacy reasons, MAY precede
+// our permissioning logic in the JSON-RPC middleware pipeline.
+export const createLegacyMethodMiddleware =
+  makeMethodMiddlewareMaker(legacyHandlers);
 
 /**
- * Returns a middleware that implements the RPC methods defined in the handlers
- * directory.
+ * Creates a method middleware factory function given a set of method handlers.
  *
- * The purpose of this middleware is to create portable RPC method
- * implementations that are decoupled from the rest of our background
- * architecture.
- *
- * Handlers consume functions that hook into the background, and only depend
- * on their signatures, not e.g. controller internals.
- *
- * Eventually, we'll want to extract this middleware into its own package.
- *
- * @param {Object} opts - The middleware options
- * @param {Function} opts.sendMetrics - A function for sending a metrics event
- * @returns {(req: Object, res: Object, next: Function, end: Function) => void}
+ * @param {Record<string, import('@metamask/permission-controller').PermittedHandlerExport>} handlers - The RPC method
+ * handler implementations.
+ * @returns The method middleware factory function.
  */
-export default function createMethodMiddleware(opts) {
-  return function methodMiddleware(req, res, next, end) {
-    if (handlerMap.has(req.method)) {
-      return handlerMap.get(req.method)(req, res, next, end, opts);
+function makeMethodMiddlewareMaker(handlers) {
+  const handlerMap = handlers.reduce((map, handler) => {
+    for (const methodName of handler.methodNames) {
+      map[methodName] = handler;
     }
-    return next();
+    return map;
+  }, {});
+
+  const expectedHookNames = new Set(
+    handlers.flatMap(({ hookNames }) => Object.getOwnPropertyNames(hookNames)),
+  );
+
+  /**
+   * Creates a json-rpc-engine middleware of RPC method implementations.
+   *
+   * Handlers consume functions that hook into the background, and only depend
+   * on their signatures, not e.g. controller internals.
+   *
+   * @param  {Record<string, (...args: unknown[]) => unknown | Promise<unknown>>} hooks - Required "hooks" into our
+   * controllers.
+   * @returns {import('@metamask/json-rpc-engine').JsonRpcMiddleware<unknown, unknown>} The method middleware function.
+   */
+  const makeMethodMiddleware = (hooks) => {
+    assertExpectedHook(hooks, expectedHookNames);
+
+    const methodMiddleware = async (req, res, next, end) => {
+      const handler = handlerMap[req.method];
+      if (handler) {
+        const { implementation, hookNames } = handler;
+        try {
+          // Implementations may or may not be async, so we must await them.
+          return await implementation(
+            req,
+            res,
+            next,
+            end,
+            selectHooks(hooks, hookNames),
+          );
+        } catch (error) {
+          if (process.env.METAMASK_DEBUG) {
+            console.error(error);
+          }
+          return end(
+            error instanceof Error
+              ? error
+              : rpcErrors.internal({ data: error }),
+          );
+        }
+      }
+
+      return next();
+    };
+
+    return methodMiddleware;
   };
+
+  return makeMethodMiddleware;
+}
+
+/**
+ * Asserts that the specified hooks object only has all expected hooks and no extraneous ones.
+ *
+ * @param {Record<string, unknown>} hooks - Required "hooks" into our controllers.
+ * @param {string[]} expectedHookNames - The expected hook names.
+ */
+function assertExpectedHook(hooks, expectedHookNames) {
+  const missingHookNames = [];
+  expectedHookNames.forEach((hookName) => {
+    if (!hasProperty(hooks, hookName)) {
+      missingHookNames.push(hookName);
+    }
+  });
+  if (missingHookNames.length > 0) {
+    throw new Error(
+      `Missing expected hooks:\n\n${missingHookNames.join('\n')}\n`,
+    );
+  }
+
+  const extraneousHookNames = Object.getOwnPropertyNames(hooks).filter(
+    (hookName) => !expectedHookNames.has(hookName),
+  );
+  if (extraneousHookNames.length > 0) {
+    throw new Error(
+      `Received unexpected hooks:\n\n${extraneousHookNames.join('\n')}\n`,
+    );
+  }
 }

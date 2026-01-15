@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
-import PropTypes from 'prop-types';
 import { isEqual } from 'lodash';
 import { safeComponentList } from './safe-component-list';
+import { ValidChildren } from './section-shape';
 
 function getElement(section) {
   const { element } = section;
@@ -12,6 +12,33 @@ function getElement(section) {
     );
   }
   return Element;
+}
+
+function renderElement(element) {
+  const Element = getElement(element);
+  const propsAsComponents = element.propComponents
+    ? getPropComponents(element.propComponents)
+    : {};
+  return (
+    <Element {...element.props} {...propsAsComponents}>
+      {typeof element.children === 'object' ? (
+        <MetaMaskTemplateRenderer sections={element.children} />
+      ) : (
+        element?.children
+      )}
+    </Element>
+  );
+}
+
+function getPropComponents(components) {
+  return Object.entries(components).reduce((accumulator, [key, component]) => {
+    if (component) {
+      accumulator[key] = Array.isArray(component)
+        ? component.map(renderElement)
+        : renderElement(component);
+    }
+    return accumulator;
+  }, {});
 }
 
 const MetaMaskTemplateRenderer = ({ sections }) => {
@@ -27,22 +54,16 @@ const MetaMaskTemplateRenderer = ({ sections }) => {
     !Array.isArray(sections)
   ) {
     // If dealing with a single entry, then render a single object without key
-    const Element = getElement(sections);
-    return (
-      <Element {...sections.props}>
-        {typeof sections.children === 'object' ? (
-          <MetaMaskTemplateRenderer sections={sections.children} />
-        ) : (
-          sections?.children
-        )}
-      </Element>
-    );
+    return renderElement(sections);
   }
 
   // The last case is dealing with an array of objects
   return (
     <>
       {sections.reduce((allChildren, child) => {
+        if (child === undefined || child?.hide === true) {
+          return allChildren;
+        }
         if (typeof child === 'string') {
           // React can render strings directly, so push them into the accumulator
           allChildren.push(child);
@@ -64,8 +85,11 @@ const MetaMaskTemplateRenderer = ({ sections }) => {
           } else {
             // Otherwise render the element.
             const Element = getElement(child);
+            const propsAsComponents = child.propComponents
+              ? getPropComponents(child.propComponents)
+              : {};
             allChildren.push(
-              <Element key={child.key} {...child.props}>
+              <Element key={child.key} {...child.props} {...propsAsComponents}>
                 {child?.children}
               </Element>,
             );
@@ -76,22 +100,6 @@ const MetaMaskTemplateRenderer = ({ sections }) => {
     </>
   );
 };
-
-export const SectionShape = {
-  props: PropTypes.object,
-  element: PropTypes.oneOf(Object.keys(safeComponentList)).isRequired,
-  key: PropTypes.string,
-};
-
-const ValidChildren = PropTypes.oneOfType([
-  PropTypes.string,
-  PropTypes.shape(SectionShape),
-  PropTypes.arrayOf(
-    PropTypes.oneOfType([PropTypes.shape(SectionShape), PropTypes.string]),
-  ),
-]);
-
-SectionShape.children = ValidChildren;
 
 MetaMaskTemplateRenderer.propTypes = {
   sections: ValidChildren,

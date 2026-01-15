@@ -1,17 +1,22 @@
 import { connect } from 'react-redux';
-import { getMetaMaskIdentities } from '../../../selectors';
+import { getInternalAccounts, getPermissions } from '../../../selectors';
 import PermissionPageContainer from './permission-page-container.component';
 
 const mapStateToProps = (state, ownProps) => {
-  const { selectedIdentities } = ownProps;
+  const { selectedAccounts } = ownProps;
+  const currentPermissions = getPermissions(
+    state,
+    ownProps.request.metadata?.origin,
+  );
 
-  const allIdentities = getMetaMaskIdentities(state);
-  const allIdentitiesSelected =
-    Object.keys(selectedIdentities).length ===
-      Object.keys(allIdentities).length && selectedIdentities.length > 1;
+  const allInternalAccounts = getInternalAccounts(state);
+  const allInternalAccountsSelected =
+    Object.keys(selectedAccounts).length ===
+      Object.keys(allInternalAccounts).length && selectedAccounts.length > 1;
 
   return {
-    allIdentitiesSelected,
+    allInternalAccountsSelected,
+    currentPermissions,
   };
 };
 

@@ -1,23 +1,23 @@
 module.exports = function (api) {
   api.cache(false);
   return {
-    presets: [
-      [
-        '@babel/preset-env',
-        {
-          targets: {
-            browsers: ['chrome >= 63', 'firefox >= 68'],
-          },
-        },
-      ],
-      '@babel/preset-react',
-    ],
+    parserOpts: {
+      strictMode: true,
+    },
+    targets: {
+      browsers: ['chrome >= 89', 'firefox >= 89'],
+    },
     plugins: [
-      '@babel/plugin-transform-runtime',
-      '@babel/plugin-proposal-class-properties',
-      '@babel/plugin-proposal-object-rest-spread',
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator',
+      // `browserify` is old and busted, and doesn't support `??=` (and other
+      // logical assignment operators). This plugin lets us target es2020-level
+      // browsers (except we do still end up with transpiled logical assignment
+      // operators 😭)
+      '@babel/plugin-transform-logical-assignment-operators',
+    ],
+    presets: [
+      '@babel/preset-typescript',
+      '@babel/preset-env',
+      '@babel/preset-react',
     ],
   };
 };

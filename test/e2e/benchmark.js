@@ -1,29 +1,51 @@
 #!/usr/bin/env node
-
 const path = require('path');
-const { promises: fs, constants: fsConstants } = require('fs');
+const { promises: fs } = require('fs');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 const ttest = require('ttest');
 const { retry } = require('../../development/lib/retry');
 const { exitWithError } = require('../../development/lib/exit-with-error');
-const { withFixtures } = require('./helpers');
+const {
+  isWritable,
+  getFirstParentDirectoryThatExists,
+} = require('../helpers/file');
+const { withFixtures, tinyDelayMs, unlockWallet } = require('./helpers');
 const { PAGES } = require('./webdriver/driver');
+const FixtureBuilder = require('./fixture-builder');
 
 const DEFAULT_NUM_SAMPLES = 20;
 const ALL_PAGES = Object.values(PAGES);
 
+const CUSTOM_TRACES = {
+  backgroundConnect: 'Background Connect',
+  firstReactRender: 'First Render',
+  getState: 'Get State',
+  initialActions: 'Initial Actions',
+  loadScripts: 'Load Scripts',
+  setupStore: 'Setup Store',
+  uiStartup: 'UI Startup',
+};
+
 async function measurePage(pageName) {
   let metrics;
-  await withFixtures({ fixtures: 'imported-account' }, async ({ driver }) => {
-    await driver.navigate();
-    await driver.fill('#password', 'correct horse battery staple');
-    await driver.press('#password', driver.Key.ENTER);
-    await driver.findElement('.selected-account__name');
-    await driver.navigate(pageName);
-    await driver.delay(1000);
-    metrics = await driver.collectMetrics();
-  });
+  await withFixtures(
+    {
+      fixtures: new FixtureBuilder().build(),
+      disableServerMochaToBackground: true,
+    },
+    async ({ driver }) => {
+      await driver.delay(tinyDelayMs);
+      await unlockWallet(driver, {
+        waitLoginSuccess: false,
+      });
+      await driver.findElement('[data-testid="account-menu-icon"]');
+      await driver.navigate(pageName);
+      await driver.delay(1000);
+
+      metrics = await driver.collectMetrics();
+    },
+  );
   return metrics;
 }
 
@@ -62,13 +84,13 @@ async function profilePageLoad(pages, numSamples, retries) {
     const runResults = [];
     for (let i = 0; i < numSamples; i += 1) {
       let result;
-      await retry(retries, async () => {
+      await retry({ retries }, async () => {
         result = await measurePage(pageName);
       });
       runResults.push(result);
     }
 
-    if (runResults.some((result) => result.navigation.lenth > 1)) {
+    if (runResults.some((result) => result.navigation.length > 1)) {
       throw new Error(`Multiple navigations not supported`);
     } else if (
       runResults.some((result) => result.navigation[0].type !== 'navigate')
@@ -96,6 +118,10 @@ async function profilePageLoad(pages, numSamples, retries) {
       ),
     };
 
+    for (const [key, name] of Object.entries(CUSTOM_TRACES)) {
+      result[key] = runResults.map((metrics) => metrics[name]);
+    }
+
     results[pageName] = {
       min: minResult(result),
       max: maxResult(result),
@@ -105,35 +131,6 @@ async function profilePageLoad(pages, numSamples, retries) {
     };
   }
   return results;
-}
-
-async function isWritable(directory) {
-  try {
-    await fs.access(directory, fsConstants.W_OK);
-    return true;
-  } catch (error) {
-    if (error.code !== 'EACCES') {
-      throw error;
-    }
-    return false;
-  }
-}
-
-async function getFirstParentDirectoryThatExists(directory) {
-  let nextDirectory = directory;
-  for (;;) {
-    try {
-      await fs.access(nextDirectory, fsConstants.F_OK);
-      return nextDirectory;
-    } catch (error) {
-      if (error.code !== 'ENOENT') {
-        throw error;
-      } else if (nextDirectory === path.dirname(nextDirectory)) {
-        throw new Error('Failed to find parent directory that exists');
-      }
-      nextDirectory = path.dirname(nextDirectory);
-    }
-  }
 }
 
 async function main() {

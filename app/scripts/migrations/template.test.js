@@ -1,19 +1,13 @@
-import { strict as assert } from 'assert';
-import migrationTemplate from './template';
+import { migrate, version } from './template';
 
 const storage = {
-  meta: {},
+  meta: { version: -1 },
   data: {},
 };
 
-describe('storage is migrated successfully', function () {
-  it('should work', function (done) {
-    migrationTemplate
-      .migrate(storage)
-      .then((migratedData) => {
-        assert.equal(migratedData.meta.version, 0);
-        done();
-      })
-      .catch(done);
+describe('storage is migrated successfully', () => {
+  it('should work', async () => {
+    const migratedData = await migrate(storage);
+    expect(migratedData.meta.version).toStrictEqual(version);
   });
 });

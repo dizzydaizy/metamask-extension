@@ -1,38 +1,50 @@
-import { ethErrors, serializeError } from 'eth-rpc-errors';
+import { rpcErrors, serializeError } from '@metamask/rpc-errors';
+import { isStreamWritable } from './stream-utils';
 
 const createMetaRPCHandler = (api, outStream) => {
-  return (data) => {
-    if (outStream._writableState.ended) {
+  return async (data) => {
+    if (!isStreamWritable(outStream)) {
       return;
     }
     if (!api[data.method]) {
       outStream.write({
         jsonrpc: '2.0',
-        error: ethErrors.rpc.methodNotFound({
+        error: rpcErrors.methodNotFound({
           message: `${data.method} not found`,
         }),
         id: data.id,
       });
       return;
     }
-    api[data.method](...data.params, (err, result) => {
-      if (outStream._writableState.ended) {
-        return;
+
+    let result;
+    let error;
+    try {
+      result = await api[data.method](...data.params);
+    } catch (err) {
+      error = err;
+    }
+
+    if (!isStreamWritable(outStream)) {
+      if (error) {
+        console.error(error);
       }
-      if (err) {
-        outStream.write({
-          jsonrpc: '2.0',
-          error: serializeError(err, { shouldIncludeStack: true }),
-          id: data.id,
-        });
-      } else {
-        outStream.write({
-          jsonrpc: '2.0',
-          result,
-          id: data.id,
-        });
-      }
-    });
+      return;
+    }
+
+    if (error) {
+      outStream.write({
+        jsonrpc: '2.0',
+        error: serializeError(error, { shouldIncludeStack: true }),
+        id: data.id,
+      });
+    } else {
+      outStream.write({
+        jsonrpc: '2.0',
+        result,
+        id: data.id,
+      });
+    }
   };
 };
 

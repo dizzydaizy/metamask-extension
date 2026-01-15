@@ -1,12 +1,26 @@
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import {
+  AlignItems,
+  Color,
+  Display,
+  TextVariant,
+} from '../../../helpers/constants/design-system';
+import { getAccountNameErrorMessage } from '../../../helpers/utils/accounts';
+import { ButtonIcon, IconName, Text, Box } from '../../component-library';
+import { FormTextField } from '../../component-library/form-text-field/deprecated';
 
-class EditableLabel extends Component {
+export default class EditableLabel extends Component {
   static propTypes = {
     onSubmit: PropTypes.func.isRequired,
     defaultValue: PropTypes.string,
     className: PropTypes.string,
+    accounts: PropTypes.array,
+  };
+
+  static contextTypes = {
+    t: PropTypes.func,
   };
 
   state = {
@@ -14,74 +28,76 @@ class EditableLabel extends Component {
     value: this.props.defaultValue || '',
   };
 
-  handleSubmit() {
-    const { value } = this.state;
-
-    if (value === '') {
+  async handleSubmit(isValidAccountName) {
+    if (!isValidAccountName) {
       return;
     }
 
-    Promise.resolve(this.props.onSubmit(value)).then(() =>
-      this.setState({ isEditing: false }),
-    );
+    await this.props.onSubmit(this.state.value.trim());
+    this.setState({ isEditing: false });
   }
 
   renderEditing() {
-    const { value } = this.state;
+    const { isValidAccountName, errorMessage } = getAccountNameErrorMessage(
+      this.props.accounts,
+      this.context,
+      this.state.value,
+      this.props.defaultValue,
+    );
 
-    return [
-      <input
-        key={1}
-        type="text"
-        required
-        dir="auto"
-        value={this.state.value}
-        onKeyPress={(event) => {
-          if (event.key === 'Enter') {
-            this.handleSubmit();
-          }
-        }}
-        onChange={(event) => this.setState({ value: event.target.value })}
-        className={classnames('large-input', 'editable-label__input', {
-          'editable-label__input--error': value === '',
-        })}
-        autoFocus
-      />,
-      <button
-        className="editable-label__icon-button"
-        key={2}
-        onClick={() => this.handleSubmit()}
+    return (
+      <Box
+        className={classnames('editable-label', this.props.className)}
+        display={Display.Flex}
+        gap={3}
       >
-        <i className="fa fa-check editable-label__icon" />
-      </button>,
-    ];
+        <FormTextField
+          required
+          value={this.state.value}
+          onKeyPress={(event) => {
+            if (event.key === 'Enter') {
+              this.handleSubmit(isValidAccountName);
+            }
+          }}
+          onChange={(event) => {
+            this.setState({ value: event.target.value });
+          }}
+          data-testid="editable-input"
+          error={!isValidAccountName}
+          helpText={errorMessage}
+          autoFocus
+          placeholder={this.context.t('accountName')}
+        />
+        <ButtonIcon
+          iconName={IconName.Check}
+          onClick={() => this.handleSubmit(isValidAccountName)}
+          data-testid="save-account-label-input"
+        />
+      </Box>
+    );
   }
 
   renderReadonly() {
-    return [
-      <div key={1} className="editable-label__value">
-        {this.state.value}
-      </div>,
-      <button
-        key={2}
-        className="editable-label__icon-button"
-        onClick={() => this.setState({ isEditing: true })}
-      >
-        <i className="fas fa-pencil-alt editable-label__icon" />
-      </button>,
-    ];
+    return (
+      <Box display={Display.Flex} alignItems={AlignItems.center} gap={3}>
+        <Text
+          variant={TextVariant.bodyLgMedium}
+          style={{ wordBreak: 'break-word' }}
+        >
+          {this.state.value}
+        </Text>
+        <ButtonIcon
+          iconName={IconName.Edit}
+          ariaLabel={this.context.t('edit')}
+          data-testid="editable-label-button"
+          onClick={() => this.setState({ isEditing: true })}
+          color={Color.iconDefault}
+        />
+      </Box>
+    );
   }
 
   render() {
-    const { isEditing } = this.state;
-    const { className } = this.props;
-
-    return (
-      <div className={classnames('editable-label', className)}>
-        {isEditing ? this.renderEditing() : this.renderReadonly()}
-      </div>
-    );
+    return this.state.isEditing ? this.renderEditing() : this.renderReadonly();
   }
 }
-
-export default EditableLabel;

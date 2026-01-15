@@ -1,3 +1,5 @@
+@use "design-system";
+
 .loading-swaps-quotes {
   display: flex;
   flex-flow: column;
@@ -12,28 +14,6 @@
     align-items: center;
     justify-content: center;
     max-height: 445px;
-  }
-
-  &__quote-counter {
-    @include H7;
-
-    color: $Grey-500;
-    margin-top: 3px;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    margin-bottom: 4px;
-  }
-
-  &__quote-name-check {
-    @include H4;
-
-    font-weight: bold;
-    color: $Black-100;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    text-transform: capitalize;
   }
 
   &__background-1,
@@ -89,43 +69,17 @@
     width: 316px;
   }
 
-  &__logo {
-    position: fixed;
-
-    &--transition {
-      -webkit-transition: opacity 0.4s linear;
-      -moz-transition: opacity 0.4s linear;
-      -ms-transition: opacity 0.4s linear;
-      -o-transition: opacity 0.4s linear;
-      transition: opacity 0.4s linear;
-    }
-
-    div {
-      height: 40px;
-      width: 94px;
-      border-radius: 50px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    img {
-      width: 74px;
-      height: 30px;
-    }
-  }
-
   &__loading-bar-container {
     width: 248px;
     height: 3px;
-    background: $Grey-100;
+    background: var(--color-background-alternative);
     display: flex;
     margin-top: 16px;
   }
 
   &__loading-bar {
     height: 3px;
-    background: $Blue-500;
+    background: var(--color-primary-default);
     -webkit-transition: width 0.5s linear;
     -moz-transition: width 0.5s linear;
     -o-transition: width 0.5s linear;

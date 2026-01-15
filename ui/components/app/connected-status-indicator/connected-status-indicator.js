@@ -1,68 +1,80 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
-import { findKey } from 'lodash';
+import { WALLET_SNAP_PERMISSION_KEY } from '@metamask/snaps-utils';
 import {
   STATUS_CONNECTED,
   STATUS_CONNECTED_TO_ANOTHER_ACCOUNT,
+  STATUS_CONNECTED_TO_SNAP,
   STATUS_NOT_CONNECTED,
 } from '../../../helpers/constants/connected-sites';
-import ColorIndicator from '../../ui/color-indicator';
-import { COLORS } from '../../../helpers/constants/design-system';
+import {
+  BackgroundColor,
+  Color,
+} from '../../../helpers/constants/design-system';
 import { useI18nContext } from '../../../hooks/useI18nContext';
 import {
-  getAddressConnectedDomainMap,
-  getOriginOfCurrentTab,
-  getSelectedAddress,
+  getPermissionsForActiveTab,
+  getSelectedInternalAccount,
+  getPermittedAccountsForCurrentTab,
 } from '../../../selectors';
+import { ConnectedSiteMenu } from '../../multichain';
 
-export default function ConnectedStatusIndicator({ onClick }) {
+export default function ConnectedStatusIndicator({ onClick, disabled }) {
   const t = useI18nContext();
 
-  const selectedAddress = useSelector(getSelectedAddress);
-  const addressConnectedDomainMap = useSelector(getAddressConnectedDomainMap);
-  const originOfCurrentTab = useSelector(getOriginOfCurrentTab);
+  const { address: selectedAddress } = useSelector(getSelectedInternalAccount);
 
-  const selectedAddressDomainMap = addressConnectedDomainMap[selectedAddress];
-  const currentTabIsConnectedToSelectedAddress = Boolean(
-    selectedAddressDomainMap && selectedAddressDomainMap[originOfCurrentTab],
+  const permissionsForActiveTab = useSelector(getPermissionsForActiveTab);
+
+  const activeWalletSnap = permissionsForActiveTab
+    .map((permission) => permission.key)
+    .includes(WALLET_SNAP_PERMISSION_KEY);
+
+  const permittedAccounts = useSelector(getPermittedAccountsForCurrentTab);
+  const currentTabIsConnectedToSelectedAddress = permittedAccounts.find(
+    (account) => account === selectedAddress,
   );
+
   let status;
   if (currentTabIsConnectedToSelectedAddress) {
     status = STATUS_CONNECTED;
-  } else if (findKey(addressConnectedDomainMap, originOfCurrentTab)) {
+  } else if (permittedAccounts.length > 0) {
     status = STATUS_CONNECTED_TO_ANOTHER_ACCOUNT;
+  } else if (activeWalletSnap) {
+    status = STATUS_CONNECTED_TO_SNAP;
   } else {
     status = STATUS_NOT_CONNECTED;
   }
 
-  let indicatorType = ColorIndicator.TYPES.OUTLINE;
-  let indicatorColor = COLORS.UI4;
-
+  let globalMenuColor = Color.iconAlternative;
   if (status === STATUS_CONNECTED) {
-    indicatorColor = COLORS.SUCCESS1;
-    indicatorType = ColorIndicator.TYPES.PARTIAL;
-  } else if (status === STATUS_CONNECTED_TO_ANOTHER_ACCOUNT) {
-    indicatorColor = COLORS.ALERT1;
+    globalMenuColor = Color.successDefault;
+  } else if (
+    status === STATUS_CONNECTED_TO_ANOTHER_ACCOUNT ||
+    status === STATUS_CONNECTED_TO_SNAP
+  ) {
+    globalMenuColor = BackgroundColor.backgroundDefault;
   }
 
-  const text =
+  const tooltipText =
     status === STATUS_CONNECTED
-      ? t('statusConnected')
-      : t('statusNotConnected');
+      ? t('tooltipSatusConnected')
+      : t('tooltipSatusNotConnected');
 
   return (
-    <button className="connected-status-indicator" onClick={onClick}>
-      <ColorIndicator color={indicatorColor} type={indicatorType} />
-      <div className="connected-status-indicator__text">{text}</div>
-    </button>
+    <ConnectedSiteMenu
+      status={status}
+      globalMenuColor={globalMenuColor}
+      text={tooltipText}
+      as="button"
+      onClick={onClick}
+      disabled={disabled}
+    />
   );
 }
 
-ConnectedStatusIndicator.defaultProps = {
-  onClick: undefined,
-};
-
 ConnectedStatusIndicator.propTypes = {
   onClick: PropTypes.func,
+  disabled: PropTypes.bool,
 };

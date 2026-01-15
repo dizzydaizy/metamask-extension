@@ -12,16 +12,18 @@ import {
   TRANSACTION_CANCEL_ATTEMPTED_EVENT,
   TRANSACTION_CANCEL_SUCCESS_EVENT,
 } from '../transaction-activity-log.constants';
+import { Icon, IconName, IconSize } from '../../../component-library';
+import { Color } from '../../../../helpers/constants/design-system';
 
-const imageHash = {
-  [TRANSACTION_CREATED_EVENT]: '/images/icons/new.svg',
-  [TRANSACTION_SUBMITTED_EVENT]: '/images/icons/submitted.svg',
-  [TRANSACTION_RESUBMITTED_EVENT]: '/images/icons/retry.svg',
-  [TRANSACTION_CONFIRMED_EVENT]: '/images/icons/confirm.svg',
-  [TRANSACTION_DROPPED_EVENT]: '/images/icons/cancelled.svg',
-  [TRANSACTION_ERRORED_EVENT]: '/images/icons/error.svg',
-  [TRANSACTION_CANCEL_ATTEMPTED_EVENT]: '/images/icons/cancelled.svg',
-  [TRANSACTION_CANCEL_SUCCESS_EVENT]: '/images/icons/cancelled.svg',
+export const ACTIVITY_ICONS = {
+  [TRANSACTION_CREATED_EVENT]: IconName.Add,
+  [TRANSACTION_SUBMITTED_EVENT]: IconName.ArrowUp,
+  [TRANSACTION_RESUBMITTED_EVENT]: IconName.ProgrammingArrows,
+  [TRANSACTION_CONFIRMED_EVENT]: IconName.Check,
+  [TRANSACTION_DROPPED_EVENT]: IconName.Close,
+  [TRANSACTION_ERRORED_EVENT]: IconName.Danger,
+  [TRANSACTION_CANCEL_ATTEMPTED_EVENT]: IconName.Close,
+  [TRANSACTION_CANCEL_SUCCESS_EVENT]: IconName.Close,
 };
 
 export default class TransactionActivityLogIcon extends PureComponent {
@@ -31,16 +33,18 @@ export default class TransactionActivityLogIcon extends PureComponent {
 
   static propTypes = {
     className: PropTypes.string,
-    eventKey: PropTypes.oneOf(Object.keys(imageHash)),
+    eventKey: PropTypes.oneOf(Object.keys(ACTIVITY_ICONS)),
   };
 
   render() {
     const { className, eventKey } = this.props;
-    const imagePath = imageHash[eventKey];
+    const icon = ACTIVITY_ICONS[eventKey];
 
     return (
       <div className={classnames('transaction-activity-log-icon', className)}>
-        {imagePath && <img src={imagePath} height="9" width="9" alt="" />}
+        {icon ? (
+          <Icon name={icon} color={Color.iconDefault} size={IconSize.Sm} />
+        ) : null}
       </div>
     );
   }

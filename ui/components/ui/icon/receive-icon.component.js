@@ -1,6 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+/**
+ * @deprecated This has been deprecated in favor of the `<Icon />` component in ./ui/components/component-library/icon/icon.js
+ * See storybook documentation for Icon here https://metamask.github.io/metamask-storybook/?path=/docs/components-componentlibrary-icon--default-story#icon
+ */
+
 const Receive = ({ className, size, color }) => (
   <svg
     className={className}
@@ -31,8 +36,17 @@ Receive.defaultProps = {
 };
 
 Receive.propTypes = {
+  /**
+   * Additional className
+   */
   className: PropTypes.string,
+  /**
+   * Size of the icon should adhere to 8px grid. e.g: 8, 16, 24, 32, 40 and is required
+   */
   size: PropTypes.number.isRequired,
+  /**
+   * Color of the icon should be a valid design system color and is required
+   */
   color: PropTypes.string.isRequired,
 };
 

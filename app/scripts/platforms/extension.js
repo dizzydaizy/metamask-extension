@@ -1,108 +1,103 @@
-import extension from 'extensionizer';
+import browser from 'webextension-polyfill';
+
 import { getBlockExplorerLink } from '@metamask/etherscan-link';
-import { getEnvironmentType, checkForError } from '../lib/util';
+import { startCase, toLower } from 'lodash';
+import { TransactionStatus } from '@metamask/transaction-controller';
+import { getEnvironmentType } from '../lib/util';
 import { ENVIRONMENT_TYPE_BACKGROUND } from '../../../shared/constants/app';
-import { TRANSACTION_STATUSES } from '../../../shared/constants/transaction';
+// TODO: Remove restricted import
+// eslint-disable-next-line import/no-restricted-paths
+import { getURLHostName } from '../../../ui/helpers/utils/util';
+import { t } from '../translate';
 
 export default class ExtensionPlatform {
   //
   // Public
   //
   reload() {
-    extension.runtime.reload();
+    browser.runtime.reload();
   }
 
-  openTab(options) {
-    return new Promise((resolve, reject) => {
-      extension.tabs.create(options, (newTab) => {
-        const error = checkForError();
-        if (error) {
-          return reject(error);
-        }
-        return resolve(newTab);
-      });
-    });
+  async openTab(options) {
+    const newTab = await browser.tabs.create(options);
+    return newTab;
   }
 
-  openWindow(options) {
-    return new Promise((resolve, reject) => {
-      extension.windows.create(options, (newWindow) => {
-        const error = checkForError();
-        if (error) {
-          return reject(error);
-        }
-        return resolve(newWindow);
-      });
-    });
+  async openWindow(options) {
+    const newWindow = await browser.windows.create(options);
+    return newWindow;
   }
 
-  focusWindow(windowId) {
-    return new Promise((resolve, reject) => {
-      extension.windows.update(windowId, { focused: true }, () => {
-        const error = checkForError();
-        if (error) {
-          return reject(error);
-        }
-        return resolve();
-      });
-    });
+  async focusWindow(windowId) {
+    await browser.windows.update(windowId, { focused: true });
   }
 
-  updateWindowPosition(windowId, left, top) {
-    return new Promise((resolve, reject) => {
-      extension.windows.update(windowId, { left, top }, () => {
-        const error = checkForError();
-        if (error) {
-          return reject(error);
-        }
-        return resolve();
-      });
-    });
+  async updateWindowPosition(windowId, left, top) {
+    await browser.windows.update(windowId, { left, top });
   }
 
-  getLastFocusedWindow() {
-    return new Promise((resolve, reject) => {
-      extension.windows.getLastFocused((windowObject) => {
-        const error = checkForError();
-        if (error) {
-          return reject(error);
-        }
-        return resolve(windowObject);
-      });
-    });
+  async getLastFocusedWindow() {
+    const windowObject = await browser.windows.getLastFocused();
+    return windowObject;
   }
 
-  closeCurrentWindow() {
-    return extension.windows.getCurrent((windowDetails) => {
-      return extension.windows.remove(windowDetails.id);
-    });
+  async closeCurrentWindow() {
+    const windowDetails = await browser.windows.getCurrent();
+    browser.windows.remove(windowDetails.id);
   }
 
+  /**
+   * Returns the version of the extension by reading the manifest.
+   */
   getVersion() {
-    return extension.runtime.getManifest().version;
+    // return the "live" version of the extension, as the bundle of code running
+    // might be from a different version of the application than the manifest.
+    // This isn't supposed to happen, but we've seen it before in Sentry.
+    // This should *not* be updated to the static `process.env.METAMASK_VERSION`
+    return browser.runtime.getManifest().version;
   }
 
-  openExtensionInBrowser(route = null, queryString = null) {
-    let extensionURL = extension.runtime.getURL('home.html');
+  getExtensionURL(route = null, queryString = null) {
+    let extensionURL = browser.runtime.getURL('home.html');
+
+    if (route) {
+      extensionURL += `#${route}`;
+    }
 
     if (queryString) {
       extensionURL += `?${queryString}`;
     }
 
-    if (route) {
-      extensionURL += `#${route}`;
-    }
+    return extensionURL;
+  }
+
+  openExtensionInBrowser(
+    route = null,
+    queryString = null,
+    keepWindowOpen = false,
+  ) {
+    const extensionURL = this.getExtensionURL(
+      route,
+      queryString,
+      keepWindowOpen,
+    );
+
     this.openTab({ url: extensionURL });
-    if (getEnvironmentType() !== ENVIRONMENT_TYPE_BACKGROUND) {
+
+    if (
+      getEnvironmentType() !== ENVIRONMENT_TYPE_BACKGROUND &&
+      !keepWindowOpen
+    ) {
       window.close();
     }
   }
 
   getPlatformInfo(cb) {
     try {
-      extension.runtime.getPlatformInfo((platform) => {
-        cb(null, platform);
-      });
+      const platformInfo = browser.runtime.getPlatformInfo();
+      cb(platformInfo);
+      // eslint-disable-next-line no-useless-return
+      return;
     } catch (e) {
       cb(e);
       // eslint-disable-next-line no-useless-return
@@ -110,125 +105,112 @@ export default class ExtensionPlatform {
     }
   }
 
-  showTransactionNotification(txMeta, rpcPrefs) {
+  async showTransactionNotification(txMeta, rpcPrefs) {
     const { status, txReceipt: { status: receiptStatus } = {} } = txMeta;
 
-    if (status === TRANSACTION_STATUSES.CONFIRMED) {
+    if (status === TransactionStatus.confirmed) {
       // There was an on-chain failure
       receiptStatus === '0x0'
-        ? this._showFailedTransaction(
+        ? await this._showFailedTransaction(
             txMeta,
             'Transaction encountered an error.',
           )
-        : this._showConfirmedTransaction(txMeta, rpcPrefs);
-    } else if (status === TRANSACTION_STATUSES.FAILED) {
-      this._showFailedTransaction(txMeta);
+        : await this._showConfirmedTransaction(txMeta, rpcPrefs);
+    } else if (status === TransactionStatus.failed) {
+      await this._showFailedTransaction(txMeta);
     }
   }
 
-  getAllWindows() {
-    return new Promise((resolve, reject) => {
-      extension.windows.getAll((windows) => {
-        const error = checkForError();
-        if (error) {
-          return reject(error);
-        }
-        return resolve(windows);
-      });
-    });
+  addOnRemovedListener(listener) {
+    browser.windows.onRemoved.addListener(listener);
   }
 
-  getActiveTabs() {
-    return new Promise((resolve, reject) => {
-      extension.tabs.query({ active: true }, (tabs) => {
-        const error = checkForError();
-        if (error) {
-          return reject(error);
-        }
-        return resolve(tabs);
-      });
-    });
+  async getAllWindows() {
+    const windows = await browser.windows.getAll();
+    return windows;
   }
 
-  currentTab() {
-    return new Promise((resolve, reject) => {
-      extension.tabs.getCurrent((tab) => {
-        const err = checkForError();
-        if (err) {
-          reject(err);
-        } else {
-          resolve(tab);
-        }
-      });
-    });
+  async getActiveTabs() {
+    const tabs = await browser.tabs.query({ active: true });
+    return tabs;
   }
 
-  switchToTab(tabId) {
-    return new Promise((resolve, reject) => {
-      extension.tabs.update(tabId, { highlighted: true }, (tab) => {
-        const err = checkForError();
-        if (err) {
-          reject(err);
-        } else {
-          resolve(tab);
-        }
-      });
-    });
+  async currentTab() {
+    const tab = await browser.tabs.getCurrent();
+    return tab;
   }
 
-  closeTab(tabId) {
-    return new Promise((resolve, reject) => {
-      extension.tabs.remove(tabId, () => {
-        const err = checkForError();
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+  async switchToTab(tabId) {
+    const tab = await browser.tabs.update(tabId, { highlighted: true });
+    return tab;
   }
 
-  _showConfirmedTransaction(txMeta, rpcPrefs) {
+  async switchToAnotherURL(tabId, url) {
+    await browser.tabs.update(tabId, { url });
+  }
+
+  async closeTab(tabId) {
+    await browser.tabs.remove(tabId);
+  }
+
+  async _showConfirmedTransaction(txMeta, rpcPrefs) {
     this._subscribeToNotificationClicked();
 
     const url = getBlockExplorerLink(txMeta, rpcPrefs);
     const nonce = parseInt(txMeta.txParams.nonce, 16);
+    const view = startCase(
+      toLower(getURLHostName(url).replace(/([.]\w+)$/u, '')),
+    );
 
-    const title = 'Confirmed transaction';
-    const message = `Transaction ${nonce} confirmed! ${
-      url.length ? 'View on Etherscan' : ''
-    }`;
-    this._showNotification(title, message, url);
+    const title = t('notificationTransactionSuccessTitle');
+    let message = t('notificationTransactionSuccessMessage', nonce);
+
+    if (url.length) {
+      message += ` ${t('notificationTransactionSuccessView', view)}`;
+    }
+
+    await this._showNotification(title, message, url);
   }
 
-  _showFailedTransaction(txMeta, errorMessage) {
+  async _showFailedTransaction(txMeta, errorMessage) {
     const nonce = parseInt(txMeta.txParams.nonce, 16);
-    const title = 'Failed transaction';
-    const message = `Transaction ${nonce} failed! ${
-      errorMessage || txMeta.err.message
-    }`;
-    this._showNotification(title, message);
+    const title = t('notificationTransactionFailedTitle');
+    let message = t(
+      'notificationTransactionFailedMessage',
+      nonce,
+      errorMessage || txMeta.error.message,
+    );
+    ///: BEGIN:ONLY_INCLUDE_IF(build-mmi)
+    if (isNaN(nonce)) {
+      message = t(
+        'notificationTransactionFailedMessageMMI',
+        errorMessage || txMeta.error.message,
+      );
+    }
+    ///: END:ONLY_INCLUDE_IF
+    await this._showNotification(title, message);
   }
 
-  _showNotification(title, message, url) {
-    extension.notifications.create(url, {
+  async _showNotification(title, message, url) {
+    const iconUrl = await browser.runtime.getURL('../../images/icon-64.png');
+
+    await browser.notifications.create(url, {
       type: 'basic',
       title,
-      iconUrl: extension.extension.getURL('../../images/icon-64.png'),
+      iconUrl,
       message,
     });
   }
 
   _subscribeToNotificationClicked() {
-    if (!extension.notifications.onClicked.hasListener(this._viewOnEtherscan)) {
-      extension.notifications.onClicked.addListener(this._viewOnEtherscan);
+    if (!browser.notifications.onClicked.hasListener(this._viewOnEtherscan)) {
+      browser.notifications.onClicked.addListener(this._viewOnEtherscan);
     }
   }
 
-  _viewOnEtherscan(txId) {
-    if (txId.startsWith('https://')) {
-      extension.tabs.create({ url: txId });
+  _viewOnEtherscan(url) {
+    if (url.startsWith('https://')) {
+      browser.tabs.create({ url });
     }
   }
 }

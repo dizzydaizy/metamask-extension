@@ -1,27 +1,47 @@
+@use "design-system";
+
 .wallet-overview {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: start;
   flex: 1;
-  min-height: 209px;
   min-width: 0;
-  padding-top: 10px;
   flex-direction: column;
   width: 100%;
+
+  &-fullscreen {
+    align-items: center;
+  }
 
   &__balance {
     flex: 1;
     display: flex;
+    gap: 4px;
     flex-direction: column;
-    align-items: center;
+    align-items: start;
     width: 100%;
+
+    .wallet-overview-fullscreen > & {
+      align-items: center;
+    }
+  }
+
+  &__icon_button {
+    margin-top: 0 !important;
   }
 
   &__buttons {
     display: flex;
     flex-direction: row;
-    height: 68px;
-    margin-bottom: 24px;
+    height: 100%;
+    margin-bottom: 16px;
+    padding: 0 16px;
+  }
+
+  &__currency-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
   }
 }
 
@@ -37,28 +57,36 @@
   font-weight: 500;
 }
 
+.coin-overview,
 .eth-overview {
   &__balance {
     display: flex;
     flex-direction: column;
     min-width: 0;
     position: relative;
-    align-items: center;
+    align-items: start;
     margin: 16px 0;
     padding: 0 16px;
-    max-width: 100%;
+    max-width: 326px;
+  }
+
+  &__icon-button {
+    margin-top: 0 !important;
   }
 
   &__primary-container {
     display: flex;
+    max-width: inherit;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
   &__primary-balance {
-    @include H2;
+    @include design-system.H2;
 
-    color: $black;
-    width: 100%;
-    justify-content: center;
+    color: var(--color-text-default);
+    font-weight: 700;
   }
 
   &__cached-star {
@@ -67,24 +95,21 @@
 
   &__cached-balance,
   &__cached-star {
-    color: $web-orange;
+    color: var(--color-warning-default);
   }
 
   &__cached-secondary-balance {
-    @include Paragraph;
+    @include design-system.Paragraph;
 
-    color: rgba(220, 153, 18, 0.6901960784313725);
+    color: var(--color-warning-muted);
   }
 
   &__secondary-balance {
-    @include Paragraph;
+    @include design-system.Paragraph;
 
-    color: $Grey-400;
+    color: var(--color-text-alternative);
   }
 
-  &__button {
-    margin-right: 24px;
-  }
 
   &__button:last-of-type {
     margin-right: 0;
@@ -96,7 +121,7 @@
     align-items: center;
     height: 36px;
     width: 36px;
-    background: #037dd6;
+    background: var(--color-primary-default);
     border-radius: 18px;
     margin-top: 6px;
   }
@@ -111,28 +136,39 @@
     align-items: center;
     margin: 16px 0;
     padding: 0 16px;
-    max-width: 100%;
+    max-width: 326px;
+  }
+
+  &__primary-container {
+    display: flex;
+    max-width: inherit;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
   &__primary-balance {
-    @include H2;
+    @include design-system.H2;
 
-    color: $black;
+    color: var(--color-text-default);
     width: 100%;
     justify-content: center;
   }
 
   &__secondary-balance {
-    @include H5;
+    @include design-system.H5;
 
-    color: $Grey-400;
-  }
-
-  &__button {
-    margin-right: 24px;
+    color: var(--color-text-alternative);
   }
 
   &__button:last-of-type {
     margin-right: 0;
+  }
+}
+
+.balance-popover {
+  &__container {
+    z-index: design-system.$modal-z-index;
+    margin-top: -4px;
   }
 }

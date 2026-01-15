@@ -1,95 +1,91 @@
-import { strict as assert } from 'assert';
 import { cloneDeep } from 'lodash';
 import {
-  KOVAN_CHAIN_ID,
-  MAINNET_CHAIN_ID,
-  RINKEBY_CHAIN_ID,
-  GOERLI_CHAIN_ID,
-} from '../../../shared/constants/network';
-import {
-  TRANSACTION_TYPES,
-  TRANSACTION_STATUSES,
-} from '../../../shared/constants/transaction';
+  TransactionStatus,
+  TransactionType,
+} from '@metamask/transaction-controller';
+import { CHAIN_IDS } from '../../../shared/constants/network';
 import migration59 from './059';
+
+const SENT_ETHER = 'sentEther'; // a legacy transaction type replaced now by TransactionType.simpleSend
 
 const ERRONEOUS_TRANSACTION_STATE = {
   0: {
-    type: TRANSACTION_TYPES.CANCEL,
+    type: TransactionType.cancel,
     id: 0,
-    chainId: MAINNET_CHAIN_ID,
+    chainId: CHAIN_IDS.MAINNET,
     txParams: {
       nonce: '0x0',
     },
   },
   1: {
-    type: TRANSACTION_TYPES.SENT_ETHER,
+    type: SENT_ETHER,
     id: 1,
-    chainId: MAINNET_CHAIN_ID,
+    chainId: CHAIN_IDS.MAINNET,
     txParams: {
       nonce: '0x1',
     },
   },
   2: {
-    type: TRANSACTION_TYPES.SENT_ETHER,
+    type: SENT_ETHER,
     id: 2,
-    chainId: KOVAN_CHAIN_ID,
+    chainId: '0x2a',
     txParams: {
       nonce: '0x2',
     },
   },
   3: {
-    type: TRANSACTION_TYPES.SENT_ETHER,
+    type: SENT_ETHER,
     id: 3,
-    chainId: RINKEBY_CHAIN_ID,
+    chainId: '0x4',
     txParams: {
       nonce: '0x3',
     },
   },
   4: {
-    type: TRANSACTION_TYPES.SENT_ETHER,
+    type: SENT_ETHER,
     id: 4,
-    chainId: RINKEBY_CHAIN_ID,
+    chainId: '0x4',
     txParams: {
       nonce: '0x4',
     },
   },
   5: {
-    type: TRANSACTION_TYPES.SENT_ETHER,
+    type: SENT_ETHER,
     id: 5,
-    chainId: MAINNET_CHAIN_ID,
+    chainId: CHAIN_IDS.MAINNET,
     txParams: {
       nonce: '0x5',
     },
   },
   6: {
-    type: TRANSACTION_TYPES.SENT_ETHER,
+    type: SENT_ETHER,
     id: 6,
-    chainId: KOVAN_CHAIN_ID,
+    chainId: '0x2a',
     txParams: {
       nonce: '0x6',
     },
   },
   7: {
-    type: TRANSACTION_TYPES.SENT_ETHER,
+    type: SENT_ETHER,
     id: 7,
-    chainId: RINKEBY_CHAIN_ID,
+    chainId: '0x4',
     txParams: {
       nonce: '0x7',
     },
   },
   8: {
-    type: TRANSACTION_TYPES.SENT_ETHER,
+    type: SENT_ETHER,
     id: 8,
-    chainId: RINKEBY_CHAIN_ID,
+    chainId: '0x4',
     txParams: {
       nonce: '0x8',
     },
   },
   9: {
-    type: TRANSACTION_TYPES.SENT_ETHER,
+    type: SENT_ETHER,
     id: 9,
-    chainId: RINKEBY_CHAIN_ID,
-    status: TRANSACTION_STATUSES.UNAPPROVED,
+    chainId: '0x4',
+    status: TransactionStatus.unapproved,
   },
 };
 
@@ -97,32 +93,32 @@ const ERRONEOUS_TRANSACTION_STATE_RETRY = {
   ...ERRONEOUS_TRANSACTION_STATE,
   0: {
     ...ERRONEOUS_TRANSACTION_STATE[0],
-    type: TRANSACTION_TYPES.RETRY,
+    type: TransactionType.retry,
   },
 };
 
 const ERRONEOUS_TRANSACTION_STATE_MIXED = {
   ...ERRONEOUS_TRANSACTION_STATE,
   10: {
-    type: TRANSACTION_TYPES.RETRY,
+    type: TransactionType.retry,
     id: 10,
-    chainId: MAINNET_CHAIN_ID,
+    chainId: CHAIN_IDS.MAINNET,
     txParams: {
       nonce: '0xa',
     },
   },
   11: {
-    type: TRANSACTION_TYPES.RETRY,
+    type: TransactionType.retry,
     id: 11,
-    chainId: MAINNET_CHAIN_ID,
+    chainId: CHAIN_IDS.MAINNET,
     txParams: {
       nonce: '0xb',
     },
   },
 };
 
-describe('migration #59', function () {
-  it('should update the version metadata', async function () {
+describe('migration #59', () => {
+  it('should update the version metadata', async () => {
     const oldStorage = {
       meta: {
         version: 58,
@@ -131,12 +127,12 @@ describe('migration #59', function () {
     };
 
     const newStorage = await migration59.migrate(oldStorage);
-    assert.deepEqual(newStorage.meta, {
+    expect(newStorage.meta).toStrictEqual({
       version: 59,
     });
   });
 
-  it('should drop orphaned cancel transactions', async function () {
+  it('should drop orphaned cancel transactions', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -150,7 +146,7 @@ describe('migration #59', function () {
     const newStorage = await migration59.migrate(oldStorage);
     const EXPECTED = cloneDeep(ERRONEOUS_TRANSACTION_STATE);
     delete EXPECTED['0'];
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       TransactionController: {
         transactions: EXPECTED,
       },
@@ -158,7 +154,7 @@ describe('migration #59', function () {
     });
   });
 
-  it('should drop orphaned cancel transactions even if a nonce exists on another network that is confirmed', async function () {
+  it('should drop orphaned cancel transactions even if a nonce exists on another network that is confirmed', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -168,8 +164,8 @@ describe('migration #59', function () {
             11: {
               ...ERRONEOUS_TRANSACTION_STATE['0'],
               id: 11,
-              chainId: GOERLI_CHAIN_ID,
-              type: TRANSACTION_TYPES.SENT_ETHER,
+              chainId: CHAIN_IDS.GOERLI,
+              type: SENT_ETHER,
             },
           },
         },
@@ -182,7 +178,7 @@ describe('migration #59', function () {
       oldStorage.data.TransactionController.transactions,
     );
     delete EXPECTED['0'];
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       TransactionController: {
         transactions: EXPECTED,
       },
@@ -190,7 +186,7 @@ describe('migration #59', function () {
     });
   });
 
-  it('should not drop cancel transactions with matching non cancel or retry in same network and nonce', async function () {
+  it('should not drop cancel transactions with matching non cancel or retry in same network and nonce', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -200,7 +196,7 @@ describe('migration #59', function () {
             11: {
               ...ERRONEOUS_TRANSACTION_STATE['0'],
               id: 11,
-              type: TRANSACTION_TYPES.SENT_ETHER,
+              type: SENT_ETHER,
             },
           },
         },
@@ -209,7 +205,7 @@ describe('migration #59', function () {
     };
 
     const newStorage = await migration59.migrate(oldStorage);
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       TransactionController: {
         transactions: oldStorage.data.TransactionController.transactions,
       },
@@ -217,7 +213,7 @@ describe('migration #59', function () {
     });
   });
 
-  it('should drop orphaned retry transactions', async function () {
+  it('should drop orphaned retry transactions', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -231,7 +227,7 @@ describe('migration #59', function () {
     const newStorage = await migration59.migrate(oldStorage);
     const EXPECTED = cloneDeep(ERRONEOUS_TRANSACTION_STATE_RETRY);
     delete EXPECTED['0'];
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       TransactionController: {
         transactions: EXPECTED,
       },
@@ -239,7 +235,7 @@ describe('migration #59', function () {
     });
   });
 
-  it('should drop orphaned retry transactions even if a nonce exists on another network that is confirmed', async function () {
+  it('should drop orphaned retry transactions even if a nonce exists on another network that is confirmed', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -249,8 +245,8 @@ describe('migration #59', function () {
             11: {
               ...ERRONEOUS_TRANSACTION_STATE_RETRY['0'],
               id: 11,
-              chainId: GOERLI_CHAIN_ID,
-              type: TRANSACTION_TYPES.SENT_ETHER,
+              chainId: CHAIN_IDS.GOERLI,
+              type: SENT_ETHER,
             },
           },
         },
@@ -263,7 +259,7 @@ describe('migration #59', function () {
       oldStorage.data.TransactionController.transactions,
     );
     delete EXPECTED['0'];
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       TransactionController: {
         transactions: EXPECTED,
       },
@@ -271,7 +267,7 @@ describe('migration #59', function () {
     });
   });
 
-  it('should not drop retry transactions with matching non cancel or retry in same network and nonce', async function () {
+  it('should not drop retry transactions with matching non cancel or retry in same network and nonce', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -281,7 +277,7 @@ describe('migration #59', function () {
             11: {
               ...ERRONEOUS_TRANSACTION_STATE_RETRY['0'],
               id: 11,
-              type: TRANSACTION_TYPES.SENT_ETHER,
+              type: SENT_ETHER,
             },
           },
         },
@@ -290,7 +286,7 @@ describe('migration #59', function () {
     };
 
     const newStorage = await migration59.migrate(oldStorage);
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       TransactionController: {
         transactions: oldStorage.data.TransactionController.transactions,
       },
@@ -298,7 +294,7 @@ describe('migration #59', function () {
     });
   });
 
-  it('should drop all orphaned retry and cancel transactions', async function () {
+  it('should drop all orphaned retry and cancel transactions', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -315,7 +311,7 @@ describe('migration #59', function () {
     // transactions we expect to be missing.
     const EXPECTED = cloneDeep(ERRONEOUS_TRANSACTION_STATE);
     delete EXPECTED['0'];
-    assert.deepEqual(newStorage.data, {
+    expect(newStorage.data).toStrictEqual({
       TransactionController: {
         transactions: EXPECTED,
       },
@@ -323,7 +319,7 @@ describe('migration #59', function () {
     });
   });
 
-  it('should do nothing if transactions state does not exist', async function () {
+  it('should do nothing if transactions state does not exist', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -338,10 +334,10 @@ describe('migration #59', function () {
     };
 
     const newStorage = await migration59.migrate(oldStorage);
-    assert.deepEqual(oldStorage.data, newStorage.data);
+    expect(oldStorage.data).toStrictEqual(newStorage.data);
   });
 
-  it('should do nothing if transactions state is empty', async function () {
+  it('should do nothing if transactions state is empty', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -354,10 +350,10 @@ describe('migration #59', function () {
     };
 
     const newStorage = await migration59.migrate(oldStorage);
-    assert.deepEqual(oldStorage.data, newStorage.data);
+    expect(oldStorage.data).toStrictEqual(newStorage.data);
   });
 
-  it('should do nothing if transactions state is not an object', async function () {
+  it('should do nothing if transactions state is not an object', async () => {
     const oldStorage = {
       meta: {},
       data: {
@@ -370,16 +366,16 @@ describe('migration #59', function () {
     };
 
     const newStorage = await migration59.migrate(oldStorage);
-    assert.deepEqual(oldStorage.data, newStorage.data);
+    expect(oldStorage.data).toStrictEqual(newStorage.data);
   });
 
-  it('should do nothing if state is empty', async function () {
+  it('should do nothing if state is empty', async () => {
     const oldStorage = {
       meta: {},
       data: {},
     };
 
     const newStorage = await migration59.migrate(oldStorage);
-    assert.deepEqual(oldStorage.data, newStorage.data);
+    expect(oldStorage.data).toStrictEqual(newStorage.data);
   });
 });

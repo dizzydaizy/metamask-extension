@@ -2,7 +2,6 @@ export const currentNetworkTxListSample = {
   "id": 7900715443136469,
   "time": 1621395091737,
   "status": "unapproved",
-  "metamaskNetworkId": "1337",
   "chainId": "0x539",
   "loadingDefaults": false,
   "txParams": {
@@ -20,7 +19,6 @@ export const currentNetworkTxListSample = {
       "id": 7900715443136469,
       "time": 1621395091737,
       "status": "unapproved",
-      "metamaskNetworkId": "1337",
       "chainId": "0x539",
       "loadingDefaults": true,
       "txParams": {
@@ -46,11 +44,11 @@ export const currentNetworkTxListSample = {
   ]
 }
 
-export const domainMetadata = {
+export const subjectMetadata = {
   "https://metamask.github.io": {
+    "origin": "https://metamask.github.io",
     "name": "E2E Test Dapp",
-    "icon": "https://metamask.github.io/test-dapp/metamask-fox.svg",
-    "lastUpdated": 1620723443380,
-    "host": "metamask.github.io"
+    "iconUrl": "https://metamask.github.io/test-dapp/metamask-fox.svg",
+    "subjectType": "website"
   }
 }

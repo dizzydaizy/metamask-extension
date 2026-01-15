@@ -6,13 +6,11 @@ import {
   removePermittedAccount,
 } from '../../store/actions';
 import {
-  getConnectedDomainsForSelectedAddress,
-  getCurrentAccountWithSendEtherInfo,
+  getConnectedSubjectsForSelectedAddress,
   getOriginOfCurrentTab,
-  getPermissionDomains,
-  getPermissionsMetadataHostCounts,
+  getPermissionSubjects,
   getPermittedAccountsByOrigin,
-  getSelectedAddress,
+  getSelectedInternalAccount,
 } from '../../selectors';
 import { CONNECT_ROUTE } from '../../helpers/constants/routes';
 import { getMostRecentOverviewPage } from '../../ducks/history/history';
@@ -21,13 +19,13 @@ import ConnectedSites from './connected-sites.component';
 const mapStateToProps = (state) => {
   const { openMetaMaskTabs } = state.appState;
   const { id } = state.activeTab;
-  const connectedDomains = getConnectedDomainsForSelectedAddress(state);
+  const connectedSubjects = getConnectedSubjectsForSelectedAddress(state);
   const originOfCurrentTab = getOriginOfCurrentTab(state);
   const permittedAccountsByOrigin = getPermittedAccountsByOrigin(state);
-  const selectedAddress = getSelectedAddress(state);
+  const { address: selectedAddress } = getSelectedInternalAccount(state);
 
-  const currentTabHasNoAccounts = !permittedAccountsByOrigin[originOfCurrentTab]
-    ?.length;
+  const currentTabHasNoAccounts =
+    !permittedAccountsByOrigin[originOfCurrentTab]?.length;
 
   let tabToConnect;
   if (originOfCurrentTab && currentTabHasNoAccounts && !openMetaMaskTabs[id]) {
@@ -37,10 +35,9 @@ const mapStateToProps = (state) => {
   }
 
   return {
-    accountLabel: getCurrentAccountWithSendEtherInfo(state).name,
-    connectedDomains,
-    domains: getPermissionDomains(state),
-    domainHostCount: getPermissionsMetadataHostCounts(state),
+    accountLabel: getSelectedInternalAccount(state).metadata.name,
+    connectedSubjects,
+    subjects: getPermissionSubjects(state),
     mostRecentOverviewPage: getMostRecentOverviewPage(state),
     permittedAccountsByOrigin,
     selectedAddress,
@@ -51,16 +48,16 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     getOpenMetamaskTabsIds: () => dispatch(getOpenMetamaskTabsIds()),
-    disconnectAccount: (domainKey, address) => {
-      dispatch(removePermittedAccount(domainKey, address));
+    disconnectAccount: (subjectKey, address) => {
+      dispatch(removePermittedAccount(subjectKey, address));
     },
-    disconnectAllAccounts: (domainKey, domain) => {
-      const permissionMethodNames = domain.permissions.map(
+    disconnectAllAccounts: (subjectKey, subject) => {
+      const permissionMethodNames = Object.values(subject.permissions).map(
         ({ parentCapability }) => parentCapability,
       );
       dispatch(
         removePermissionsFor({
-          [domainKey]: permissionMethodNames,
+          [subjectKey]: permissionMethodNames,
         }),
       );
     },
@@ -71,8 +68,8 @@ const mapDispatchToProps = (dispatch) => {
 
 const mergeProps = (stateProps, dispatchProps, ownProps) => {
   const {
-    connectedDomains,
-    domains,
+    connectedSubjects,
+    subjects,
     mostRecentOverviewPage,
     selectedAddress,
     tabToConnect,
@@ -92,15 +89,15 @@ const mergeProps = (stateProps, dispatchProps, ownProps) => {
     ...stateProps,
     ...dispatchProps,
     closePopover,
-    disconnectAccount: (domainKey) => {
-      disconnectAccount(domainKey, selectedAddress);
-      if (connectedDomains.length === 1) {
+    disconnectAccount: (subjectKey) => {
+      disconnectAccount(subjectKey, selectedAddress);
+      if (connectedSubjects.length === 1) {
         closePopover();
       }
     },
-    disconnectAllAccounts: (domainKey) => {
-      disconnectAllAccounts(domainKey, domains[domainKey]);
-      if (connectedDomains.length === 1) {
+    disconnectAllAccounts: (subjectKey) => {
+      disconnectAllAccounts(subjectKey, subjects[subjectKey]);
+      if (connectedSubjects.length === 1) {
         closePopover();
       }
     },

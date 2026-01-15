@@ -1,4 +1,5 @@
-import { TRANSACTION_TYPES } from '../../../../shared/constants/transaction';
+import { TransactionType } from '@metamask/transaction-controller';
+import { sumHexes } from '../../../../shared/modules/conversion.utils';
 import { getHexGasTotal } from '../../../helpers/utils/confirm-tx.util';
 
 import {
@@ -22,6 +23,8 @@ import {
 const STATUS_PATH = '/status';
 const GAS_PRICE_PATH = '/txParams/gasPrice';
 const GAS_LIMIT_PATH = '/txParams/gas';
+const ESTIMATE_BASE_FEE_PATH = '/estimatedBaseFee';
+const BLOCKTIMESTAMP = '/blockTimestamp';
 
 // op constants
 const REPLACE_OP = 'replace';
@@ -30,6 +33,7 @@ const eventPathsHash = {
   [STATUS_PATH]: true,
   [GAS_PRICE_PATH]: true,
   [GAS_LIMIT_PATH]: true,
+  [BLOCKTIMESTAMP]: true,
 };
 
 const statusHash = {
@@ -40,7 +44,7 @@ const statusHash = {
 
 /**
  * @name getActivities
- * @param {Object} transaction - txMeta object
+ * @param {object} transaction - txMeta object
  * @param {boolean} isFirstTransaction - True if the transaction is the first created transaction
  * in the list of transactions with the same nonce. If so, we use this transaction to create the
  * transactionCreated activity.
@@ -50,14 +54,22 @@ export function getActivities(transaction, isFirstTransaction = false) {
   const {
     id,
     chainId,
-    metamaskNetworkId,
     hash,
     history = [],
-    txParams: { gas: paramsGasLimit, gasPrice: paramsGasPrice },
-    xReceipt: { status } = {},
+    txParams: {
+      gas: paramsGasLimit,
+      gasPrice: paramsGasPrice,
+      maxPriorityFeePerGas: paramsMaxPriorityFeePerGas,
+    },
+    txReceipt: { status } = {},
     type,
+    estimatedBaseFee: paramsEstimatedBaseFee,
   } = transaction;
 
+  const paramsEip1559Price =
+    paramsEstimatedBaseFee &&
+    paramsMaxPriorityFeePerGas &&
+    sumHexes(paramsEstimatedBaseFee, paramsMaxPriorityFeePerGas);
   let cachedGasLimit = '0x0';
   let cachedGasPrice = '0x0';
 
@@ -66,20 +78,25 @@ export function getActivities(transaction, isFirstTransaction = false) {
     if (index === 0 && !Array.isArray(base) && base.txParams) {
       const {
         time: timestamp,
-        txParams: { value, gas = '0x0', gasPrice = '0x0' } = {},
+        estimatedBaseFee,
+        txParams: { value, gas = '0x0', gasPrice, maxPriorityFeePerGas } = {},
       } = base;
+
+      const eip1559Price =
+        estimatedBaseFee &&
+        maxPriorityFeePerGas &&
+        sumHexes(estimatedBaseFee, maxPriorityFeePerGas);
       // The cached gas limit and gas price are used to display the gas fee in the activity log. We
       // need to cache these values because the status update history events don't provide us with
       // the latest gas limit and gas price.
       cachedGasLimit = gas;
-      cachedGasPrice = gasPrice;
+      cachedGasPrice = eip1559Price || gasPrice || paramsGasPrice || '0x0';
 
       if (isFirstTransaction) {
         return acc.concat({
           id,
           hash,
           chainId,
-          metamaskNetworkId,
           eventKey: TRANSACTION_CREATED_EVENT,
           timestamp,
           value,
@@ -95,14 +112,16 @@ export function getActivities(transaction, isFirstTransaction = false) {
         // timestamp, the first sub-entry in a history entry should.
         const timestamp = entryTimestamp || (base[0] && base[0].timestamp);
 
-        if (path in eventPathsHash && op === REPLACE_OP) {
+        const isAddBaseFee = path === ESTIMATE_BASE_FEE_PATH && op === 'add';
+
+        if ((path in eventPathsHash && op === REPLACE_OP) || isAddBaseFee) {
           switch (path) {
             case STATUS_PATH: {
               const gasFee =
                 cachedGasLimit === '0x0' && cachedGasPrice === '0x0'
                   ? getHexGasTotal({
                       gasLimit: paramsGasLimit,
-                      gasPrice: paramsGasPrice,
+                      gasPrice: paramsEip1559Price || paramsGasPrice,
                     })
                   : getHexGasTotal({
                       gasLimit: cachedGasLimit,
@@ -115,28 +134,25 @@ export function getActivities(transaction, isFirstTransaction = false) {
                 // If the status is 'submitted', we need to determine whether the event is a
                 // transaction retry or a cancellation attempt.
                 if (value === SUBMITTED_STATUS) {
-                  if (type === TRANSACTION_TYPES.RETRY) {
+                  if (type === TransactionType.retry) {
                     eventKey = TRANSACTION_RESUBMITTED_EVENT;
-                  } else if (type === TRANSACTION_TYPES.CANCEL) {
+                  } else if (type === TransactionType.cancel) {
                     eventKey = TRANSACTION_CANCEL_ATTEMPTED_EVENT;
                   }
                 } else if (value === CONFIRMED_STATUS) {
-                  if (type === TRANSACTION_TYPES.CANCEL) {
+                  if (type === TransactionType.cancel) {
                     eventKey = TRANSACTION_CANCEL_SUCCESS_EVENT;
                   }
                 }
-
                 events.push({
                   id,
                   hash,
                   eventKey,
                   timestamp,
                   chainId,
-                  metamaskNetworkId,
                   value: gasFee,
                 });
               }
-
               break;
             }
 
@@ -144,7 +160,8 @@ export function getActivities(transaction, isFirstTransaction = false) {
             // previously submitted event. These events happen when the gas limit and gas price is
             // changed at the confirm screen.
             case GAS_PRICE_PATH:
-            case GAS_LIMIT_PATH: {
+            case GAS_LIMIT_PATH:
+            case ESTIMATE_BASE_FEE_PATH: {
               const lastEvent = events[events.length - 1] || {};
               const { lastEventKey } = lastEvent;
 
@@ -152,6 +169,12 @@ export function getActivities(transaction, isFirstTransaction = false) {
                 cachedGasLimit = value;
               } else if (path === GAS_PRICE_PATH) {
                 cachedGasPrice = value;
+              } else if (path === ESTIMATE_BASE_FEE_PATH) {
+                cachedGasPrice = paramsEip1559Price || base?.txParams?.gasPrice;
+                lastEvent.value = getHexGasTotal({
+                  gasLimit: paramsGasLimit,
+                  gasPrice: cachedGasPrice,
+                });
               }
 
               if (
@@ -163,7 +186,18 @@ export function getActivities(transaction, isFirstTransaction = false) {
                   gasPrice: cachedGasPrice,
                 });
               }
+              break;
+            }
 
+            case BLOCKTIMESTAMP: {
+              const filteredAcc = acc.find(
+                (ac) => ac.eventKey === TRANSACTION_CONFIRMED_EVENT,
+              );
+              if (filteredAcc !== undefined) {
+                filteredAcc.timestamp = new Date(
+                  parseInt(entry.value, 16) * 1000,
+                ).getTime();
+              }
               break;
             }
 
@@ -172,7 +206,6 @@ export function getActivities(transaction, isFirstTransaction = false) {
                 id,
                 hash,
                 chainId,
-                metamaskNetworkId,
                 eventKey: TRANSACTION_UPDATED_EVENT,
                 timestamp,
               });
@@ -194,7 +227,6 @@ export function getActivities(transaction, isFirstTransaction = false) {
         id,
         hash,
         chainId,
-        metamaskNetworkId,
         eventKey: TRANSACTION_ERRORED_EVENT,
       })
     : historyActivities;
@@ -236,6 +268,7 @@ function filterSortedActivities(activities) {
 
 /**
  * Combines the histories of an array of transactions into a single array.
+ *
  * @param {Array} transactions - Array of txMeta transaction objects.
  * @returns {Array}
  */

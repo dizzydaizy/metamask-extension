@@ -1,25 +1,48 @@
 import { EventEmitter } from 'events';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import Button from '@material-ui/core/Button';
-import getCaretCoordinates from 'textarea-caret';
+import { Text } from '../../components/component-library';
+import { TextVariant, TextColor } from '../../helpers/constants/design-system';
+import Button from '../../components/ui/button';
 import TextField from '../../components/ui/text-field';
 import Mascot from '../../components/ui/mascot';
 import { DEFAULT_ROUTE } from '../../helpers/constants/routes';
+import {
+  MetaMetricsContextProp,
+  MetaMetricsEventCategory,
+  MetaMetricsEventName,
+} from '../../../shared/constants/metametrics';
+import { SUPPORT_LINK } from '../../../shared/lib/ui-utils';
+import { isBeta } from '../../helpers/utils/build-types';
+import { getCaretCoordinates } from './unlock-page.util';
 
 export default class UnlockPage extends Component {
   static contextTypes = {
-    metricsEvent: PropTypes.func,
+    trackEvent: PropTypes.func,
     t: PropTypes.func,
   };
 
   static propTypes = {
+    /**
+     * History router for redirect after action
+     */
     history: PropTypes.object.isRequired,
+    /**
+     * If isUnlocked is true will redirect to most recent route in history
+     */
     isUnlocked: PropTypes.bool,
+    /**
+     * onClick handler for "Forgot password?" link
+     */
     onRestore: PropTypes.func,
+    /**
+     * onSubmit handler when form is submitted
+     */
     onSubmit: PropTypes.func,
+    /**
+     * Force update metamask data state
+     */
     forceUpdateMetamaskState: PropTypes.func,
-    showOptInModal: PropTypes.func,
   };
 
   state = {
@@ -28,6 +51,8 @@ export default class UnlockPage extends Component {
   };
 
   submitting = false;
+
+  failed_attempts = 0;
 
   animationEventEmitter = new EventEmitter();
 
@@ -44,7 +69,7 @@ export default class UnlockPage extends Component {
     event.stopPropagation();
 
     const { password } = this.state;
-    const { onSubmit, forceUpdateMetamaskState, showOptInModal } = this.props;
+    const { onSubmit, forceUpdateMetamaskState } = this.props;
 
     if (password === '' || this.submitting) {
       return;
@@ -55,34 +80,29 @@ export default class UnlockPage extends Component {
 
     try {
       await onSubmit(password);
-      const newState = await forceUpdateMetamaskState();
-      this.context.metricsEvent({
-        eventOpts: {
-          category: 'Navigation',
-          action: 'Unlock',
-          name: 'Success',
-        },
-        isNewVisit: true,
-      });
-
-      if (
-        newState.participateInMetaMetrics === null ||
-        newState.participateInMetaMetrics === undefined
-      ) {
-        showOptInModal();
-      }
-    } catch ({ message }) {
-      if (message === 'Incorrect password') {
-        const newState = await forceUpdateMetamaskState();
-        this.context.metricsEvent({
-          eventOpts: {
-            category: 'Navigation',
-            action: 'Unlock',
-            name: 'Incorrect Password',
+      this.context.trackEvent(
+        {
+          category: MetaMetricsEventCategory.Navigation,
+          event: MetaMetricsEventName.AppUnlocked,
+          properties: {
+            failed_attempts: this.failed_attempts,
           },
-          customVariables: {
-            numberOfTokens: newState.tokens.length,
-            numberOfAccounts: Object.keys(newState.accounts).length,
+        },
+        {
+          isNewVisit: true,
+        },
+      );
+    } catch ({ message }) {
+      this.failed_attempts += 1;
+
+      if (message === 'Incorrect password') {
+        await forceUpdateMetamaskState();
+        this.context.trackEvent({
+          category: MetaMetricsEventCategory.Navigation,
+          event: MetaMetricsEventName.AppUnlockedFailed,
+          properties: {
+            reason: 'incorrect_password',
+            failed_attempts: this.failed_attempts,
           },
         });
       }
@@ -94,7 +114,6 @@ export default class UnlockPage extends Component {
 
   handleInputChange({ target }) {
     this.setState({ password: target.value, error: null });
-
     // tell mascot to look at page action
     if (target.getBoundingClientRect) {
       const element = target;
@@ -109,25 +128,24 @@ export default class UnlockPage extends Component {
 
   renderSubmitButton() {
     const style = {
-      backgroundColor: '#037dd6',
-      color: 'white',
+      backgroundColor: 'var(--color-primary-default)',
+      color: 'var(--color-primary-inverse)',
       marginTop: '20px',
       height: '60px',
       fontWeight: '400',
       boxShadow: 'none',
-      borderRadius: '4px',
+      borderRadius: '100px',
     };
 
     return (
       <Button
         type="submit"
+        data-testid="unlock-submit"
         style={style}
         disabled={!this.state.password}
-        fullWidth
         variant="contained"
         size="large"
         onClick={this.handleSubmit}
-        disableRipple
       >
         {this.context.t('unlock')}
       </Button>
@@ -139,21 +157,41 @@ export default class UnlockPage extends Component {
     const { t } = this.context;
     const { onRestore } = this.props;
 
+    let needHelpText = t('appNameMmi');
+
+    ///: BEGIN:ONLY_INCLUDE_IF(build-main,build-beta,build-flask)
+    needHelpText = t('needHelpLinkText');
+    ///: END:ONLY_INCLUDE_IF
+
     return (
       <div className="unlock-page__container">
-        <div className="unlock-page">
+        <div className="unlock-page" data-testid="unlock-page">
           <div className="unlock-page__mascot-container">
             <Mascot
               animationEventEmitter={this.animationEventEmitter}
               width="120"
               height="120"
             />
+            {isBeta() ? (
+              <div className="unlock-page__mascot-container__beta">
+                {t('beta')}
+              </div>
+            ) : null}
           </div>
-          <h1 className="unlock-page__title">{t('welcomeBack')}</h1>
+          <Text
+            data-testid="unlock-page-title"
+            as="h1"
+            variant={TextVariant.headingLg}
+            marginTop={1}
+            color={TextColor.textAlternative}
+          >
+            {t('welcomeBack')}
+          </Text>
           <div>{t('unlockMessage')}</div>
           <form className="unlock-page__form" onSubmit={this.handleSubmit}>
             <TextField
               id="password"
+              data-testid="unlock-password"
               label={t('password')}
               type="password"
               value={password}
@@ -167,25 +205,40 @@ export default class UnlockPage extends Component {
           </form>
           {this.renderSubmitButton()}
           <div className="unlock-page__links">
-            {t('importAccountText', [
-              <button
-                key="import-account"
-                className="unlock-page__link unlock-page__link--import"
-                onClick={() => onRestore()}
-              >
-                {t('importAccountLinkText')}
-              </button>,
-            ])}
+            <Button
+              type="link"
+              key="import-account"
+              className="unlock-page__link"
+              onClick={() => onRestore()}
+            >
+              {t('forgotPassword')}
+            </Button>
           </div>
           <div className="unlock-page__support">
             {t('needHelp', [
               <a
-                href="https://support.metamask.io"
+                href={SUPPORT_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
                 key="need-help-link"
+                onClick={() => {
+                  this.context.trackEvent(
+                    {
+                      category: MetaMetricsEventCategory.Navigation,
+                      event: MetaMetricsEventName.SupportLinkClicked,
+                      properties: {
+                        url: SUPPORT_LINK,
+                      },
+                    },
+                    {
+                      contextPropsIntoEventProperties: [
+                        MetaMetricsContextProp.PageTitle,
+                      ],
+                    },
+                  );
+                }}
               >
-                {t('needHelpLinkText')}
+                {needHelpText}
               </a>,
             ])}
           </div>

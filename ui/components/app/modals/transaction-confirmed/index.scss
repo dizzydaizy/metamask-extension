@@ -1,18 +1,6 @@
+@use "design-system";
+
 .transaction-confirmed {
-  &__title {
-    @include H3;
-
-    font-weight: 500;
-    padding: 16px 0;
-    text-align: center;
-  }
-
-  &__description {
-    @include H6;
-
-    text-align: center;
-  }
-
   &__content {
     overflow-y: auto;
     flex: 1;

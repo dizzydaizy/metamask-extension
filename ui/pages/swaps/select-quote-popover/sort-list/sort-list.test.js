@@ -1,10 +1,18 @@
 import React from 'react';
 
-import { renderWithProvider } from '../../../../../test/jest';
+import { renderWithProvider, fireEvent } from '../../../../../test/jest';
+import MockState from '../../../../../test/data/mock-state.json';
+import configureStore from '../../../../store/store';
 import SortList from './sort-list';
+
+jest.mock(
+  '../../../../components/ui/info-tooltip/info-tooltip-icon',
+  () => () => '<InfoTooltipIcon />',
+);
 
 const createProps = (customProps = {}) => {
   return {
+    hideEstimatedGasFee: false,
     selectedAggId: 'Agg2',
     onSelect: jest.fn(),
     onCaretClick: jest.fn(),
@@ -65,8 +73,12 @@ const createProps = (customProps = {}) => {
 };
 
 describe('SortList', () => {
+  const store = configureStore(MockState);
   it('renders the component with initial props', () => {
-    const { getByText } = renderWithProvider(<SortList {...createProps()} />);
+    const { getByText } = renderWithProvider(
+      <SortList {...createProps()} />,
+      store,
+    );
     expect(getByText('$15.25')).toBeInTheDocument();
     expect(getByText('$14.26')).toBeInTheDocument();
     expect(getByText('$13.27')).toBeInTheDocument();
@@ -79,5 +91,33 @@ describe('SortList', () => {
     expect(
       document.querySelector('.select-quote-popover__row--selected'),
     ).toMatchSnapshot();
+  });
+
+  it('clicks on the "destinationTokenValue" header', () => {
+    const props = createProps();
+    const { getByTestId } = renderWithProvider(<SortList {...props} />, store);
+    fireEvent.click(getByTestId('select-quote-popover__receiving'));
+    expect(props.setSortColumn).toHaveBeenCalledWith('destinationTokenValue');
+  });
+
+  it('clicks on the "rawNetworkFees" header', () => {
+    const props = createProps();
+    const { getByTestId } = renderWithProvider(<SortList {...props} />, store);
+    fireEvent.click(getByTestId('select-quote-popover__network-fees-header'));
+    expect(props.setSortColumn).toHaveBeenCalledWith('rawNetworkFees');
+  });
+
+  it('clicks on the first aggregator', () => {
+    const props = createProps();
+    const { getByTestId } = renderWithProvider(<SortList {...props} />, store);
+    fireEvent.click(getByTestId('select-quote-popover-row-0'));
+    expect(props.onSelect).toHaveBeenCalledWith('Agg1');
+  });
+
+  it('clicks on a caret for the first aggregator', () => {
+    const props = createProps();
+    const { getByTestId } = renderWithProvider(<SortList {...props} />, store);
+    fireEvent.click(getByTestId('select-quote-popover__caret-right-0'));
+    expect(props.onCaretClick).toHaveBeenCalledWith('Agg1');
   });
 });

@@ -3,6 +3,11 @@ import classnames from 'classnames';
 import PropTypes from 'prop-types';
 import { SEVERITIES } from '../../../helpers/constants/design-system';
 
+/**
+ * @deprecated This has been deprecated in favor of the `<Icon />` component in ./ui/components/component-library/icon/icon.js
+ * See storybook documentation for Icon here https://metamask.github.io/metamask-storybook/?path=/docs/components-componentlibrary-icon--default-story#icon
+ */
+
 export default function InfoIcon({ severity }) {
   const className = classnames('info-icon', {
     'info-icon--success': severity === SEVERITIES.SUCCESS,
@@ -24,5 +29,8 @@ export default function InfoIcon({ severity }) {
 }
 
 InfoIcon.propTypes = {
+  /**
+   * Severity can be 1 of 4 states:'danger', 'warning', 'info' or 'success'
+   */
   severity: PropTypes.oneOf(Object.values(SEVERITIES)),
 };

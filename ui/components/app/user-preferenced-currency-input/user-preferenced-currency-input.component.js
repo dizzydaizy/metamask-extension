@@ -1,19 +1,22 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import CurrencyInput from '../../ui/currency-input';
+import CurrencyInput from '../currency-input';
 
+// Noticed this component is not used in codebase;
+// removing usage of useNativeCurrencyAsPrimaryCurrency because its being removed in this PR
 export default class UserPreferencedCurrencyInput extends PureComponent {
   static propTypes = {
-    useNativeCurrencyAsPrimaryCurrency: PropTypes.bool,
+    sendInputCurrencySwitched: PropTypes.bool,
+    ...CurrencyInput.propTypes,
   };
 
   render() {
-    const { useNativeCurrencyAsPrimaryCurrency, ...restProps } = this.props;
+    const { sendInputCurrencySwitched, ...restProps } = this.props;
 
     return (
       <CurrencyInput
         {...restProps}
-        useFiat={!useNativeCurrencyAsPrimaryCurrency}
+        isFiatPreferred={Boolean(sendInputCurrencySwitched)}
       />
     );
   }

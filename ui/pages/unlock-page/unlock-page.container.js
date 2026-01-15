@@ -1,6 +1,8 @@
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { compose } from 'redux';
+// TODO: Remove restricted import
+// eslint-disable-next-line import/no-restricted-paths
 import { getEnvironmentType } from '../../../app/scripts/lib/util';
 import { ENVIRONMENT_TYPE_POPUP } from '../../../shared/constants/app';
 import {
@@ -9,10 +11,8 @@ import {
 } from '../../helpers/constants/routes';
 import {
   tryUnlockMetamask,
-  forgotPassword,
   markPasswordForgotten,
   forceUpdateMetamaskState,
-  showModal,
 } from '../../store/actions';
 import UnlockPage from './unlock-page.component';
 
@@ -27,12 +27,9 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    forgotPassword: () => dispatch(forgotPassword()),
     tryUnlockMetamask: (password) => dispatch(tryUnlockMetamask(password)),
     markPasswordForgotten: () => dispatch(markPasswordForgotten()),
     forceUpdateMetamaskState: () => forceUpdateMetamaskState(dispatch),
-    showOptInModal: () =>
-      dispatch(showModal({ name: 'METAMETRICS_OPT_IN_MODAL' })),
   };
 };
 

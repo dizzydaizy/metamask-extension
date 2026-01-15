@@ -1,348 +1,149 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { shallow, mount } from 'enzyme';
-import sinon from 'sinon';
-import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
-import UnitInput from '../unit-input';
-import CurrencyDisplay from '../currency-display';
-import TokenInput from './token-input.component';
+import { fireEvent } from '@testing-library/react';
+import { renderWithProvider } from '../../../../test/lib/render-helpers';
+import mockState from '../../../../test/data/mock-state.json';
+import {
+  CHAIN_IDS,
+  CURRENCY_SYMBOLS,
+} from '../../../../shared/constants/network';
+import { mockNetworkState } from '../../../../test/stub/networks';
+import TokenInput from '.';
 
 describe('TokenInput Component', () => {
-  const t = (key) => `translate ${key}`;
+  const props = {
+    dataTestId: 'token-input',
+    onChange: jest.fn(),
+    token: {
+      address: '0x108cf70c7d384c552f42c07c41c0e1e46d77ea0d',
+      symbol: 'TEST',
+      decimals: 0,
+    },
+  };
 
-  describe('rendering', () => {
+  afterEach(() => {
+    props.onChange.mockReset();
+  });
+
+  describe('Name of the group', () => {
     it('should render properly', () => {
-      const mockStore = {
-        metamask: {
-          currentCurrency: 'usd',
-          conversionRate: 231.06,
-        },
-      };
-      const store = configureMockStore()(mockStore);
+      const mockStore = configureMockStore()(mockState);
 
-      const wrapper = mount(
-        <Provider store={store}>
-          <TokenInput
-            token={{
-              address: '0x1',
-              decimals: 4,
-              symbol: 'ABC',
-            }}
-          />
-        </Provider>,
-        {
-          context: { t },
-          childContextTypes: {
-            t: PropTypes.func,
-          },
-        },
+      const { container } = renderWithProvider(
+        <TokenInput {...props} />,
+        mockStore,
       );
 
-      expect(wrapper).toHaveLength(1);
-      expect(wrapper.find('.unit-input__suffix')).toHaveLength(1);
-      expect(wrapper.find('.unit-input__suffix').text()).toStrictEqual('ABC');
-      expect(
-        wrapper.find('.currency-input__conversion-component'),
-      ).toHaveLength(1);
-      expect(
-        wrapper.find('.currency-input__conversion-component').text(),
-      ).toStrictEqual('translate noConversionRateAvailable');
-    });
-
-    it('should render properly with tokenExchangeRates', () => {
-      const mockStore = {
-        metamask: {
-          currentCurrency: 'usd',
-          conversionRate: 231.06,
-        },
-      };
-      const store = configureMockStore()(mockStore);
-
-      const wrapper = mount(
-        <Provider store={store}>
-          <TokenInput
-            token={{
-              address: '0x1',
-              decimals: 4,
-              symbol: 'ABC',
-            }}
-            tokenExchangeRates={{ '0x1': 2 }}
-          />
-        </Provider>,
-        {
-          context: { t },
-          childContextTypes: {
-            t: PropTypes.func,
-          },
-        },
-      );
-
-      expect(wrapper).toHaveLength(1);
-      expect(wrapper.find('.unit-input__suffix')).toHaveLength(1);
-      expect(wrapper.find('.unit-input__suffix').text()).toStrictEqual('ABC');
-      expect(wrapper.find(CurrencyDisplay)).toHaveLength(1);
-    });
-
-    it('should render properly with a token value for ETH', () => {
-      const mockStore = {
-        metamask: {
-          currentCurrency: 'usd',
-          conversionRate: 231.06,
-        },
-      };
-      const store = configureMockStore()(mockStore);
-
-      const wrapper = mount(
-        <Provider store={store}>
-          <TokenInput
-            value="2710"
-            token={{
-              address: '0x1',
-              decimals: 4,
-              symbol: 'ABC',
-            }}
-            tokenExchangeRates={{ '0x1': 2 }}
-          />
-        </Provider>,
-      );
-
-      expect(wrapper).toHaveLength(1);
-      const tokenInputInstance = wrapper.find(TokenInput).at(0).instance();
-      expect(tokenInputInstance.state.decimalValue).toStrictEqual('1');
-      expect(tokenInputInstance.state.hexValue).toStrictEqual('2710');
-      expect(wrapper.find('.unit-input__suffix')).toHaveLength(1);
-      expect(wrapper.find('.unit-input__suffix').text()).toStrictEqual('ABC');
-      expect(wrapper.find('.unit-input__input').props().value).toStrictEqual(
-        '1',
-      );
-      expect(wrapper.find('.currency-display-component').text()).toStrictEqual(
-        '2ETH',
-      );
-    });
-
-    it('should render properly with a token value for fiat', () => {
-      const mockStore = {
-        metamask: {
-          currentCurrency: 'usd',
-          conversionRate: 231.06,
-        },
-      };
-      const store = configureMockStore()(mockStore);
-
-      const wrapper = mount(
-        <Provider store={store}>
-          <TokenInput
-            value="2710"
-            token={{
-              address: '0x1',
-              decimals: 4,
-              symbol: 'ABC',
-            }}
-            tokenExchangeRates={{ '0x1': 2 }}
-            showFiat
-            currentCurrency="usd"
-          />
-        </Provider>,
-      );
-
-      expect(wrapper).toHaveLength(1);
-      const tokenInputInstance = wrapper.find(TokenInput).at(0).instance();
-      expect(tokenInputInstance.state.decimalValue).toStrictEqual('1');
-      expect(tokenInputInstance.state.hexValue).toStrictEqual('2710');
-      expect(wrapper.find('.unit-input__suffix')).toHaveLength(1);
-      expect(wrapper.find('.unit-input__suffix').text()).toStrictEqual('ABC');
-      expect(wrapper.find('.unit-input__input').props().value).toStrictEqual(
-        '1',
-      );
-      expect(wrapper.find('.currency-display-component').text()).toStrictEqual(
-        '$462.12USD',
-      );
-    });
-
-    it('should render properly with a token value for fiat, but hideConversion is true', () => {
-      const mockStore = {
-        metamask: {
-          currentCurrency: 'usd',
-          conversionRate: 231.06,
-        },
-      };
-      const store = configureMockStore()(mockStore);
-
-      const wrapper = mount(
-        <Provider store={store}>
-          <TokenInput
-            value="2710"
-            token={{
-              address: '0x1',
-              decimals: 4,
-              symbol: 'ABC',
-            }}
-            tokenExchangeRates={{ '0x1': 2 }}
-            showFiat
-            hideConversion
-          />
-        </Provider>,
-        {
-          context: { t },
-          childContextTypes: {
-            t: PropTypes.func,
-          },
-        },
-      );
-
-      expect(wrapper).toHaveLength(1);
-      const tokenInputInstance = wrapper.find(TokenInput).at(0).instance();
-      expect(tokenInputInstance.state.decimalValue).toStrictEqual('1');
-      expect(tokenInputInstance.state.hexValue).toStrictEqual('2710');
-      expect(wrapper.find('.unit-input__suffix')).toHaveLength(1);
-      expect(wrapper.find('.unit-input__suffix').text()).toStrictEqual('ABC');
-      expect(wrapper.find('.unit-input__input').props().value).toStrictEqual(
-        '1',
-      );
-      expect(
-        wrapper.find('.currency-input__conversion-component').text(),
-      ).toStrictEqual('translate noConversionRateAvailable');
+      expect(container).toMatchSnapshot();
     });
   });
 
-  describe('handling actions', () => {
-    const handleChangeSpy = sinon.spy();
-    const handleBlurSpy = sinon.spy();
-
-    afterEach(() => {
-      handleChangeSpy.resetHistory();
-      handleBlurSpy.resetHistory();
-    });
-
-    it('should call onChange on input changes with the hex value for ETH', () => {
-      const mockStore = {
+  describe('Conversion Display', () => {
+    it('should render conversionRate', () => {
+      const showFiatState = {
+        ...mockState,
         metamask: {
-          currentCurrency: 'usd',
-          conversionRate: 231.06,
+          ...mockState.metamask,
+          preferences: {
+            ...mockState.metamask.preferences,
+            showFiatInTestnets: true,
+          },
         },
       };
-      const store = configureMockStore()(mockStore);
-      const wrapper = mount(
-        <Provider store={store}>
-          <TokenInput
-            onChange={handleChangeSpy}
-            token={{
-              address: '0x1',
-              decimals: 4,
-              symbol: 'ABC',
-            }}
-            tokenExchangeRates={{ '0x1': 2 }}
-          />
-        </Provider>,
+      const mockStore = configureMockStore()(showFiatState);
+
+      const { queryByTitle } = renderWithProvider(
+        <TokenInput {...props} />,
+        mockStore,
       );
 
-      expect(wrapper).toHaveLength(1);
-      expect(handleChangeSpy.callCount).toStrictEqual(0);
-      expect(handleBlurSpy.callCount).toStrictEqual(0);
-
-      const tokenInputInstance = wrapper.find(TokenInput).at(0).instance();
-      expect(tokenInputInstance.state.decimalValue).toStrictEqual(0);
-      expect(tokenInputInstance.state.hexValue).toBeUndefined();
-      expect(wrapper.find('.currency-display-component').text()).toStrictEqual(
-        '0ETH',
-      );
-      const input = wrapper.find('input');
-      expect(input.props().value).toStrictEqual(0);
-
-      input.simulate('change', { target: { value: 1 } });
-      expect(handleChangeSpy.callCount).toStrictEqual(1);
-      expect(handleChangeSpy.calledWith('2710')).toStrictEqual(true);
-      expect(wrapper.find('.currency-display-component').text()).toStrictEqual(
-        '2ETH',
-      );
-      expect(tokenInputInstance.state.decimalValue).toStrictEqual(1);
-      expect(tokenInputInstance.state.hexValue).toStrictEqual('2710');
+      expect(queryByTitle('0 ETH')).toBeInTheDocument();
     });
 
-    it('should call onChange on input changes with the hex value for fiat', () => {
-      const mockStore = {
+    it('should render conversionRate on polygon', () => {
+      const showFiatState = {
+        ...mockState,
         metamask: {
-          currentCurrency: 'usd',
-          conversionRate: 231.06,
+          ...mockState.metamask,
+          currencyRates: {
+            [CURRENCY_SYMBOLS.POL]: {
+              conversionRate: 1,
+            },
+          },
+          preferences: {
+            ...mockState.metamask.preferences,
+            showFiatInTestnets: true,
+          },
+          ...mockNetworkState({ chainId: CHAIN_IDS.POLYGON }),
         },
       };
-      const store = configureMockStore()(mockStore);
-      const wrapper = mount(
-        <Provider store={store}>
-          <TokenInput
-            onChange={handleChangeSpy}
-            token={{
-              address: '0x1',
-              decimals: 4,
-              symbol: 'ABC',
-            }}
-            tokenExchangeRates={{ '0x1': 2 }}
-            showFiat
-            currentCurrency="usd"
-          />
-        </Provider>,
+      const mockStore = configureMockStore()(showFiatState);
+
+      const { queryByTitle } = renderWithProvider(
+        <TokenInput {...props} />,
+        mockStore,
       );
 
-      expect(wrapper).toHaveLength(1);
-      expect(handleChangeSpy.callCount).toStrictEqual(0);
-      expect(handleBlurSpy.callCount).toStrictEqual(0);
-
-      const tokenInputInstance = wrapper.find(TokenInput).at(0).instance();
-      expect(tokenInputInstance.state.decimalValue).toStrictEqual(0);
-      expect(tokenInputInstance.state.hexValue).toBeUndefined();
-      expect(wrapper.find('.currency-display-component').text()).toStrictEqual(
-        '$0.00USD',
-      );
-      const input = wrapper.find('input');
-      expect(input.props().value).toStrictEqual(0);
-
-      input.simulate('change', { target: { value: 1 } });
-      expect(handleChangeSpy.callCount).toStrictEqual(1);
-      expect(handleChangeSpy.calledWith('2710')).toStrictEqual(true);
-      expect(wrapper.find('.currency-display-component').text()).toStrictEqual(
-        '$462.12USD',
-      );
-      expect(tokenInputInstance.state.decimalValue).toStrictEqual(1);
-      expect(tokenInputInstance.state.hexValue).toStrictEqual('2710');
+      expect(queryByTitle('0 POL')).toBeInTheDocument();
     });
 
-    it('should change the state and pass in a new decimalValue when props.value changes', () => {
-      const mockStore = {
+    it('should render showFiat', () => {
+      const showFiatState = {
+        ...mockState,
         metamask: {
-          currentCurrency: 'usd',
-          conversionRate: 231.06,
+          ...mockState.metamask,
+          preferences: {
+            ...mockState.metamask.preferences,
+            showFiatInTestnets: true,
+          },
         },
       };
-      const store = configureMockStore()(mockStore);
-      const wrapper = shallow(
-        <Provider store={store}>
-          <TokenInput
-            onChange={handleChangeSpy}
-            token={{
-              address: '0x1',
-              decimals: 4,
-              symbol: 'ABC',
-            }}
-            tokenExchangeRates={{ '0x1': 2 }}
-            showFiat
-          />
-        </Provider>,
+
+      const showFiatProps = {
+        ...props,
+        showFiat: true,
+      };
+
+      const mockStore = configureMockStore()(showFiatState);
+
+      const { queryByTitle } = renderWithProvider(
+        <TokenInput {...showFiatProps} />,
+        mockStore,
       );
 
-      expect(wrapper).toHaveLength(1);
-      const tokenInputInstance = wrapper.find(TokenInput).dive();
-      expect(tokenInputInstance.state('decimalValue')).toStrictEqual(0);
-      expect(tokenInputInstance.state('hexValue')).toBeUndefined();
-      expect(tokenInputInstance.find(UnitInput).props().value).toStrictEqual(0);
+      expect(queryByTitle('$0.00 USD')).toBeInTheDocument();
+    });
+  });
 
-      tokenInputInstance.setProps({ value: '2710' });
-      tokenInputInstance.update();
-      expect(tokenInputInstance.state('decimalValue')).toStrictEqual('1');
-      expect(tokenInputInstance.state('hexValue')).toStrictEqual('2710');
-      expect(tokenInputInstance.find(UnitInput).props().value).toStrictEqual(
-        '1',
+  describe('handle', () => {
+    it('should handle', () => {
+      const mockStore = configureMockStore()(mockState);
+
+      const { queryByTestId } = renderWithProvider(
+        <TokenInput {...props} />,
+        mockStore,
       );
+
+      const tokenInput = queryByTestId('token-input');
+
+      fireEvent.change(tokenInput, { target: { value: '2' } });
+
+      expect(props.onChange).toHaveBeenCalledWith('2');
+    });
+
+    it('should blur', () => {
+      const mockStore = configureMockStore()(mockState);
+
+      const { queryByTestId } = renderWithProvider(
+        <TokenInput {...props} />,
+        mockStore,
+      );
+
+      const tokenInput = queryByTestId('token-input');
+
+      fireEvent.blur(tokenInput, { target: { value: '2' } });
+
+      expect(props.onChange).toHaveBeenCalledWith('2');
     });
   });
 });

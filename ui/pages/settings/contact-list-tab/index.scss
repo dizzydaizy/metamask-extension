@@ -1,13 +1,15 @@
+@use "design-system";
+
 .address-book-wrapper {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   height: 100%;
 }
 
 .address-book {
   flex: 0.4 1 100%;
 
-  @media screen and (max-width: 576px) {
+  @include design-system.screen-sm-max {
     flex: 1;
     max-width: 100%;
 
@@ -16,30 +18,9 @@
     }
   }
 
-  &__entry {
+  &__header {
     display: flex;
-    flex-flow: row nowrap;
-    padding: 16px 14px;
-    flex: 0 0 auto;
-    border-bottom: 1px solid #dedede;
-
-    &:hover {
-      border: 1px solid $primary-blue;
-      cursor: pointer;
-    }
-  }
-
-  &__name {
-    padding: 3px;
-  }
-
-  &__header,
-  &__header--edit {
-    &__name {
-      @include H3;
-
-      margin-left: 24px;
-    }
+    align-items: center;
   }
 
   &__header--edit {
@@ -47,10 +28,10 @@
     justify-content: space-between;
 
     .button {
-      @include H6;
+      @include design-system.H6;
 
       justify-content: flex-end;
-      color: $accent-red;
+      color: var(--color-error-default);
     }
   }
 
@@ -63,8 +44,13 @@
     text-align: center;
   }
 
+  &__icon {
+    margin: 0 auto 16px auto;
+    display: block;
+  }
+
   &__title {
-    @include H4;
+    @include design-system.H4;
 
     font-weight: 600;
     margin-bottom: 0.5em;
@@ -76,26 +62,26 @@
   }
 
   &__link {
-    background-color: #fff;
-    color: #037dd6;
+    background-color: transparent;
+    color: var(--color-primary-default);
   }
 
   &__input {
-    @include H4;
+    @include design-system.H4;
 
-    border: 1px solid $Grey-200;
+    border: 1px solid var(--color-border-muted);
     border-radius: 6px;
-    color: $Grey-800;
+    color: var(--color-text-muted);
     padding: 0.875rem 1rem;
 
     &:focus-within {
-      border-color: $Blue-500;
+      border-color: var(--color-primary-default);
     }
 
     margin-top: 0.25rem;
 
     &--address {
-      @include H6;
+      @include design-system.H6;
     }
   }
 
@@ -108,6 +94,14 @@
       line-height: initial !important;
     }
 
+    &__address {
+      height: 90px !important;
+
+      textarea {
+        padding-top: 10px !important;
+      }
+    }
+
     &__group {
       display: flex;
       flex-flow: column nowrap;
@@ -115,10 +109,10 @@
 
       &__label,
       &__label--capitalized {
-        @include H7;
+        @include design-system.H7;
 
-        color: $Grey-500;
-        margin-bottom: 0.25rem;
+        color: var(--color-text-alternative);
+        margin-top: 0.75rem;
       }
 
       &__label--capitalized {
@@ -127,15 +121,15 @@
 
       &__value,
       &__static-address {
-        @include H4;
+        @include design-system.H4;
 
         display: flex;
         flex-flow: row nowrap;
-        color: $Grey-800;
+        color: var(--color-text-muted);
         word-break: break-word;
 
         &--address {
-          @include H6;
+          @include design-system.H6;
         }
 
         &--copy-icon {
@@ -150,13 +144,13 @@
       }
 
       &__static-address {
-        @include H6;
+        @include design-system.H6;
 
         &--copy-icon {
           cursor: pointer;
 
           &:hover {
-            color: black;
+            color: var(--color-text-default);
           }
         }
       }
@@ -164,6 +158,35 @@
       .unit-input__input {
         max-width: 100%;
         width: 100%;
+      }
+
+      &__resolution-list,
+      &__single-resolution-list {
+        background: var(--color-background-default);
+        box-sizing: border-box;
+        box-shadow: var(--shadow-size-sm) var(--color-shadow-default);
+        border-radius: 6px;
+        position: absolute;
+        width: 309px;
+        z-index: 10;
+        top: 338px;
+        max-height: 96px;
+        overflow-y: auto;
+      }
+
+      &__resolution-list > *,
+      &__single-resolution-list > * {
+        padding: 8px;
+      }
+
+      &__resolution-list > * {
+        padding-bottom: 0;
+      }
+
+      &__resolution-list {
+        .multichain-send-page__recipient__item:last-child {
+          padding-bottom: 8px;
+        }
       }
     }
   }
@@ -181,83 +204,41 @@
         padding-top: 0;
       }
     }
-
-    .page-container__footer {
-      border-top: none;
-    }
   }
 
   &__add-contact {
     display: flex;
-    flex-flow: column nowrap;
+    flex-flow: column nowrap !important;
     padding-bottom: 0 !important;
+    width: 100%;
     height: 100%;
+    padding-top: 0;
 
     &__content {
       flex: 1 1 auto;
       height: 100%;
+      padding-top: 0;
+
+      &__username {
+        padding-top: 0;
+      }
     }
 
     &__error {
-      @include H7;
+      @include design-system.H7;
 
       left: 8px;
-      color: $red;
-    }
-  }
-
-  &__my-accounts-button {
-    display: flex;
-    flex-flow: column;
-    cursor: pointer;
-    padding: 15px;
-
-    &:hover {
-      background-color: rgba(222, 222, 222, 0.2);
-    }
-
-    &__header {
-      @include H4;
-
-      color: #000;
-    }
-
-    &__content {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    &__text {
-      @include Paragraph;
-
-      color: #6a737d;
-    }
-
-    &__caret {
-      display: block;
-      background-image: url(/images/caret-right.svg);
-      width: 30px;
-      opacity: 0.5;
-      background-repeat: no-repeat;
-
-      [dir='rtl'] & {
-        transform: rotate(180deg);
-      }
+      color: var(--color-error-default);
     }
   }
 }
 
 .address-book-add-button {
   &__button {
-    position: absolute;
-    top: 85px;
-    right: 16px;
-    width: auto;
-    border-radius: 100px;
-
-    @media screen and (max-width: 576px) {
-      top: 16px;
-      right: 60px;
+    @include design-system.screen-sm-max {
+      &--hidden {
+        display: none;
+      }
     }
   }
 }
@@ -269,7 +250,7 @@
 .address-book-contact-content {
   flex: 0.4 1 100%;
 
-  @media screen and (max-width: 576px) {
+  @include design-system.screen-sm-max {
     flex: 1;
   }
 }

@@ -1,4 +1,7 @@
 {
+  "QRHardwareSignRequestCancel": {
+    "message": "നിരസിക്കുക"
+  },
   "about": {
     "message": "വിവരം"
   },
@@ -11,6 +14,14 @@
   "appName": {
     "message": "MetaMask",
     "description": "The name of the application"
+  },
+  "appNameBeta": {
+    "message": "MetaMask Beta",
+    "description": "The name of the application (Beta)"
+  },
+  "appNameFlask": {
+    "message": "MetaMask Flask",
+    "description": "The name of the application (Flask)"
   },
   "back": {
     "message": "പിന്നോട്ട്"
@@ -36,6 +47,9 @@
   "create": {
     "message": "സൃഷ്‌ടിക്കുക"
   },
+  "custom": {
+    "message": "നൂതനം"
+  },
   "delete": {
     "message": "ഇല്ലാതാക്കുക"
   },
@@ -53,9 +67,6 @@
   },
   "forgetDevice": {
     "message": "ഈ ഉപകരണം മറക്കുക"
-  },
-  "getStarted": {
-    "message": "ആരംഭിക്കാം"
   },
   "hide": {
     "message": "മറയ്ക്കുക"
@@ -92,9 +103,6 @@
   "password": {
     "message": "പാസ്‌വേഡ്"
   },
-  "queue": {
-    "message": "ക്യൂവിൽ"
-  },
   "reject": {
     "message": "നിരസിക്കുക"
   },
@@ -122,9 +130,6 @@
   "settings": {
     "message": "ക്രമീകരണങ്ങള്‍"
   },
-  "slow": {
-    "message": "പതുക്കെ"
-  },
   "tryAgain": {
     "message": "വീണ്ടും ശ്രമിക്കുക"
   },
@@ -136,8 +141,5 @@
   },
   "userName": {
     "message": "ഉപയോക്തൃനാമം"
-  },
-  "viewAccount": {
-    "message": "അക്കൗണ്ട് കാണുക"
   }
 }

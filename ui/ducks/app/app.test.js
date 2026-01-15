@@ -1,18 +1,11 @@
 import * as actionConstants from '../../store/actionConstants';
+import { HardwareDeviceNames } from '../../../shared/constants/hardware-wallets';
 import reduceApp from './app';
 
 const actions = actionConstants;
 
 describe('App State', () => {
-  const metamaskState = {
-    selectedAddress: '0xAddress',
-    identities: {
-      '0xAddress': {
-        name: 'account 1',
-        address: '0xAddress',
-      },
-    },
-  };
+  const metamaskState = {};
 
   it('app init state', () => {
     const initState = reduceApp(metamaskState, {});
@@ -38,35 +31,10 @@ describe('App State', () => {
     expect(newState.networkDropdownOpen).toStrictEqual(false);
   });
 
-  it('opens sidebar', () => {
-    const value = {
-      transitionName: 'sidebar-right',
-      type: 'wallet-view',
-      isOpen: true,
-    };
-    const state = reduceApp(metamaskState, {
-      type: actions.SIDEBAR_OPEN,
-      value,
-    });
-
-    expect(state.sidebar).toStrictEqual(value);
-  });
-
-  it('closes sidebar', () => {
-    const openSidebar = { sidebar: { isOpen: true } };
-    const state = { ...metamaskState, ...openSidebar };
-
-    const newState = reduceApp(state, {
-      type: actions.SIDEBAR_CLOSE,
-    });
-
-    expect(newState.sidebar.isOpen).toStrictEqual(false);
-  });
-
   it('opens alert', () => {
     const state = reduceApp(metamaskState, {
       type: actions.ALERT_OPEN,
-      value: 'test message',
+      payload: 'test message',
     });
 
     expect(state.alertOpen).toStrictEqual(true);
@@ -145,28 +113,13 @@ describe('App State', () => {
       type: actions.GO_HOME,
     });
 
-    expect(state.accountDetail.subview).toStrictEqual('transactions');
-    expect(state.accountDetail.accountExport).toStrictEqual('none');
     expect(state.accountDetail.privateKey).toStrictEqual('');
     expect(state.warning).toBeNull();
-  });
-
-  it('shows account detail', () => {
-    const state = reduceApp(metamaskState, {
-      type: actions.SHOW_ACCOUNT_DETAIL,
-      value: 'context address',
-    });
-    expect(state.forgottenPassword).toBeNull(); // default
-    expect(state.accountDetail.subview).toStrictEqual('transactions'); // default
-    expect(state.accountDetail.accountExport).toStrictEqual('none'); // default
-    expect(state.accountDetail.privateKey).toStrictEqual(''); // default
   });
 
   it('clears account details', () => {
     const exportPrivKeyModal = {
       accountDetail: {
-        subview: 'export',
-        accountExport: 'completed',
         privateKey: 'a-priv-key',
       },
     };
@@ -176,10 +129,10 @@ describe('App State', () => {
       type: actions.CLEAR_ACCOUNT_DETAILS,
     });
 
-    expect(newState.accountDetail).toStrictEqual({});
+    expect(newState.accountDetail).toStrictEqual({ privateKey: '' });
   });
 
-  it('shoes account page', () => {
+  it('shows account page', () => {
     const state = reduceApp(metamaskState, {
       type: actions.SHOW_ACCOUNTS_PAGE,
     });
@@ -187,19 +140,18 @@ describe('App State', () => {
     expect(state.isLoading).toStrictEqual(false);
     expect(state.warning).toBeNull();
     expect(state.scrollToBottom).toStrictEqual(false);
-    expect(state.forgottenPassword).toStrictEqual(false);
   });
 
   it('shows confirm tx page', () => {
     const txs = {
-      unapprovedTxs: {
-        1: {
+      transactions: [
+        {
           id: 1,
         },
-        2: {
+        {
           id: 2,
         },
-      },
+      ],
     };
     const oldState = { ...metamaskState, ...txs };
     const state = reduceApp(oldState, {
@@ -214,14 +166,14 @@ describe('App State', () => {
 
   it('completes tx continues to show pending txs current view context', () => {
     const txs = {
-      unapprovedTxs: {
-        1: {
+      transactions: [
+        {
           id: 1,
         },
-        2: {
+        {
           id: 2,
         },
-      },
+      ],
     };
 
     const oldState = { ...metamaskState, ...txs };
@@ -246,7 +198,6 @@ describe('App State', () => {
     });
 
     expect(state.warning).toBeNull();
-    expect(state.accountDetail.subview).toStrictEqual('transactions');
   });
 
   it('sets default warning when unlock fails', () => {
@@ -280,11 +231,12 @@ describe('App State', () => {
     const hdPaths = {
       trezor: "m/44'/60'/0'/0",
       ledger: "m/44'/60'/0'",
+      lattice: "m/44'/60'/0'/0",
     };
     const state = reduceApp(metamaskState, {
       type: actions.SET_HARDWARE_WALLET_DEFAULT_HD_PATH,
-      value: {
-        device: 'ledger',
+      payload: {
+        device: HardwareDeviceNames.ledger,
         path: "m/44'/60'/0'",
       },
     });
@@ -295,7 +247,7 @@ describe('App State', () => {
   it('shows loading message', () => {
     const state = reduceApp(metamaskState, {
       type: actions.SHOW_LOADING,
-      value: 'loading',
+      payload: 'loading',
     });
 
     expect(state.isLoading).toStrictEqual(true);
@@ -316,7 +268,7 @@ describe('App State', () => {
   it('displays warning', () => {
     const state = reduceApp(metamaskState, {
       type: actions.DISPLAY_WARNING,
-      value: 'warning',
+      payload: 'warning',
     });
 
     expect(state.isLoading).toStrictEqual(false);
@@ -336,20 +288,74 @@ describe('App State', () => {
   it('shows private key', () => {
     const state = reduceApp(metamaskState, {
       type: actions.SHOW_PRIVATE_KEY,
-      value: 'private key',
+      payload: 'private key',
     });
 
-    expect(state.accountDetail.subview).toStrictEqual('export');
-    expect(state.accountDetail.accountExport).toStrictEqual('completed');
     expect(state.accountDetail.privateKey).toStrictEqual('private key');
   });
 
-  it('set mouse user state', () => {
+  it('smart transactions - SET_SMART_TRANSACTIONS_ERROR', () => {
     const state = reduceApp(metamaskState, {
-      type: actions.SET_MOUSE_USER_STATE,
-      value: true,
+      type: actions.SET_SMART_TRANSACTIONS_ERROR,
+      payload: 'Server Side Error',
+    });
+    expect(state.smartTransactionsError).toStrictEqual('Server Side Error');
+  });
+  it('shows delete metametrics modal', () => {
+    const state = reduceApp(metamaskState, {
+      type: actions.DELETE_METAMETRICS_DATA_MODAL_OPEN,
     });
 
-    expect(state.isMouseUser).toStrictEqual(true);
+    expect(state.showDeleteMetaMetricsDataModal).toStrictEqual(true);
+  });
+  it('hides delete metametrics modal', () => {
+    const deleteMetaMetricsDataModalState = {
+      showDeleteMetaMetricsDataModal: true,
+    };
+    const oldState = { ...metamaskState, ...deleteMetaMetricsDataModalState };
+
+    const state = reduceApp(oldState, {
+      type: actions.DELETE_METAMETRICS_DATA_MODAL_CLOSE,
+    });
+
+    expect(state.showDeleteMetaMetricsDataModal).toStrictEqual(false);
+  });
+  it('shows delete metametrics error modal', () => {
+    const state = reduceApp(metamaskState, {
+      type: actions.DATA_DELETION_ERROR_MODAL_OPEN,
+    });
+
+    expect(state.showDataDeletionErrorModal).toStrictEqual(true);
+  });
+  it('hides delete metametrics error modal', () => {
+    const deleteMetaMetricsErrorModalState = {
+      showDataDeletionErrorModal: true,
+    };
+    const oldState = { ...metamaskState, ...deleteMetaMetricsErrorModalState };
+
+    const state = reduceApp(oldState, {
+      type: actions.DATA_DELETION_ERROR_MODAL_CLOSE,
+    });
+
+    expect(state.showDataDeletionErrorModal).toStrictEqual(false);
+  });
+
+  it('displays error in settings', () => {
+    const state = reduceApp(metamaskState, {
+      type: actions.SHOW_SETTINGS_PAGE_ERROR,
+      payload: 'settings page error',
+    });
+
+    expect(state.errorInSettings).toStrictEqual('settings page error');
+  });
+
+  it('hides error in settings', () => {
+    const displayErrorInSettings = { errorInSettings: 'settings page error' };
+    const oldState = { ...metamaskState, ...displayErrorInSettings };
+    const state = reduceApp(oldState, {
+      type: actions.HIDE_SETTINGS_PAGE_ERROR,
+    });
+
+    expect(state.errorInSettings).toBeNull();
   });
 });

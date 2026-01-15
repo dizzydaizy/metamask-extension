@@ -1,27 +1,60 @@
 import React from 'react';
-import { select } from '@storybook/addon-knobs';
-import { COLORS, SIZES } from '../../../helpers/constants/design-system';
+import { Color, Size } from '../../../helpers/constants/design-system';
 import ColorIndicator from './color-indicator';
 
 export default {
-  title: 'ColorIndicator',
+  title: 'Components/UI/ColorIndicator',
+
+  argTypes: {
+    size: {
+      control: {
+        type: 'select',
+      },
+      options: Size,
+    },
+    type: {
+      control: {
+        type: 'select',
+      },
+      options: ColorIndicator.TYPES,
+    },
+    color: {
+      control: {
+        type: 'select',
+      },
+      options: Color,
+    },
+    borderColor: {
+      control: {
+        type: 'select',
+      },
+      options: { NONE: undefined, ...Color },
+    },
+  },
+  args: {
+    size: Size.LG,
+    type: ColorIndicator.TYPES.FILLED,
+    color: Color.primaryDefault,
+  },
 };
 
-export const colorIndicator = () => (
+export const DefaultStory = (args) => (
   <ColorIndicator
-    size={select('size', SIZES, SIZES.LG)}
-    type={select('type', ColorIndicator.TYPES, ColorIndicator.TYPES.FILLED)}
-    color={select('color', COLORS, COLORS.PRIMARY1)}
-    borderColor={select('borderColor', { NONE: undefined, ...COLORS })}
+    size={args.size}
+    type={args.type}
+    color={args.color}
+    borderColor={args.borderColor}
   />
 );
 
-export const withIcon = () => (
+DefaultStory.storyName = 'Default';
+
+export const WithIcon = (args) => (
   <ColorIndicator
-    size={select('size', SIZES, SIZES.LG)}
-    type={select('type', ColorIndicator.TYPES, ColorIndicator.TYPES.FILLED)}
-    color={select('color', COLORS, COLORS.PRIMARY1)}
+    size={args.size}
+    type={args.type}
+    color={args.color}
     iconClassName="fa fa-question"
-    borderColor={select('borderColor', { NONE: undefined, ...COLORS })}
+    borderColor={args.borderColor}
   />
 );

@@ -1,8 +1,9 @@
+@use "design-system";
+
 @import 'quote-details/index';
 
 .select-quote-popover {
   &__button {
-    border-radius: 100px;
     height: 39px;
     width: 140px;
   }
@@ -10,7 +11,7 @@
   &__popover-wrap {
     height: 100%;
 
-    @media screen and (min-width: 576px) {
+    @include design-system.screen-sm-min {
       height: 620px;
       width: 348px;
     }
@@ -29,10 +30,10 @@
   &__popover-bg {
     height: 100%;
     width: 100%;
-    background: $Grey-100;
+    background: var(--color-background-alternative);
     opacity: 1;
 
-    @media screen and (min-width: 576px) {
+    @include design-system.screen-sm-min {
       opacity: 0.5;
     }
   }
@@ -56,10 +57,10 @@
   }
 
   &__column-headers {
-    @include H8;
+    @include design-system.H8;
 
     font-weight: bold;
-    color: $Black-100;
+    color: var(--color-text-default);
     height: 43px;
     margin-bottom: 4px;
   }
@@ -70,28 +71,26 @@
   }
 
   &__row {
-    @include H6;
+    @include design-system.H6;
 
     cursor: pointer;
-    color: $black;
+    color: var(--color-text-default);
     height: 49px;
-    border-bottom: 1px solid $Grey-100;
+    border: 1px solid transparent;
     margin-bottom: 8px;
     border-radius: 8px;
-    background: $Grey-000;
+    background: var(--color-background-alternative);
     padding-right: 12px;
-    border: none;
 
     &:hover {
-      border: 1px solid $Blue-500;
-      width: 101%;
+      border: 1px solid var(--color-primary-default);
       padding-right: 11px;
       padding-left: 19.5px;
     }
 
     &--no-hover {
       &:hover {
-        border: 1px solid $Grey-100;
+        border: 1px solid var(--color-background-alternative);
         width: 100%;
         padding-right: 12px;
         padding-left: 20px;
@@ -99,32 +98,29 @@
     }
 
     &--selected {
-      color: $white;
-      background: linear-gradient(90deg, $Blue-500 0%, $Blue-400 101.32%);
-      box-shadow: 0 10px 39px rgba(3, 125, 214, 0.15);
+      color: var(--color-primary-inverse);
+      background: linear-gradient(90deg, var(--color-primary-default) 0%, var(--color-primary-alternative) 101.32%);
+      box-shadow: var(--shadow-size-lg) var(--color-shadow-default);
       border-radius: 8px;
-      border-bottom: none;
-      border-top: none;
       height: 64px;
 
       &:hover {
-        background: linear-gradient(90deg, $Blue-500 0%, $Blue-400 101.32%);
+        background: linear-gradient(90deg, var(--color-primary-default) 0%, var(--color-primary-alternative) 101.32%);
         width: 100%;
         padding-left: 20px;
         padding-right: 12px;
-        border: none;
       }
 
       .select-quote-popover__caret-right {
-        color: $white;
+        color: var(--color-primary-inverse);
 
         &:hover {
-          color: $Grey-500;
+          color: var(--color-icon-alternative);
         }
       }
 
       .select-quote-popover__zero-slippage {
-        color: $white;
+        color: var(--color-primary-inverse);
       }
     }
   }
@@ -147,7 +143,7 @@
   }
 
   &__caret-right {
-    color: $Grey-500;
+    color: var(--color-text-alternative);
     width: 32px;
     height: 32px;
     display: flex;
@@ -160,8 +156,8 @@
 
     &:hover {
       border-radius: 8px;
-      background: white;
-      border: 1px solid $Blue-500;
+      background: var(--color-primary-inverse);
+      border: 1px solid var(--color-primary-default);
     }
   }
 
@@ -183,7 +179,7 @@
   &__zero-slippage {
     font-size: 12px;
     line-height: 100%;
-    color: #6a737d;
+    color: var(--color-text-muted);
     font-weight: normal;
   }
 
@@ -212,7 +208,7 @@
 
 
   &__receiving-symbol {
-    color: $Grey-500;
+    color: var(--color-text-alternative);
 
     > div {
       width: 12px;
@@ -240,7 +236,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
+    color: var(--color-primary-inverse);
     border-radius: 5px;
     padding: 4px;
     font-size: 10px;
@@ -248,15 +244,15 @@
     padding-bottom: 2px;
 
     &--blue {
-      background: $Blue-300;
+      background: var(--color-primary-default);
     }
 
     &--orange {
-      background: $Orange-400;
+      background: var(--color-warning-default);
     }
 
     &--green {
-      background: $Green-500;
+      background: var(--color-success-default);
     }
   }
 }

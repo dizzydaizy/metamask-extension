@@ -1,9 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+/**
+ * @deprecated This has been deprecated in favor of the `<Icon />` component in ./ui/components/component-library/icon/icon.js
+ * See storybook documentation for Icon here https://metamask.github.io/metamask-storybook/?path=/docs/components-componentlibrary-icon--default-story#icon
+ */
+
 export default function SunCheck({ reverseColors }) {
-  const sunColor = reverseColors ? '#037DD6' : 'white';
-  const checkColor = reverseColors ? 'white' : '#037DD6';
+  const sunColor = reverseColors
+    ? 'var(--color-primary-default)'
+    : 'var(--color-primary-inverse)';
+  const checkColor = reverseColors
+    ? 'var(--color-primary-inverse)'
+    : 'var(--color-primary-default)';
   return (
     <svg
       width="15"
@@ -25,5 +34,8 @@ export default function SunCheck({ reverseColors }) {
 }
 
 SunCheck.propTypes = {
+  /**
+   * If true reverses the colors of the SunCheck icon
+   */
   reverseColors: PropTypes.bool,
 };

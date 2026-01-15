@@ -1,12 +1,14 @@
+@use "design-system";
+
 .confirm-remove-account {
   &__description {
-    @include H6;
+    @include design-system.H6;
 
     text-align: center;
   }
 
   &__account {
-    border: 1px solid #b7b7b7;
+    border: 1px solid var(--color-border-default);
     border-radius: 4px;
     padding: 10px;
     display: flex;
@@ -20,7 +22,7 @@
 
     &__name,
     &__address {
-      @include H6;
+      @include design-system.H6;
 
       margin-right: 10px;
     }
@@ -33,22 +35,17 @@
     }
 
     &__label {
-      @include H8;
+      @include design-system.H8;
 
       display: block;
-      color: #9b9b9b;
+      color: var(--color-text-muted);
     }
 
     &__link {
       margin-top: 14px;
-
-      img {
-        width: 15px;
-        height: 15px;
-      }
     }
 
-    @media screen and (max-width: 575px) {
+    @include design-system.screen-sm-max {
       &__name {
         width: 90px;
       }
@@ -56,6 +53,6 @@
   }
 
   &__link {
-    color: #2f9ae0;
+    color: var(--color-primary-default);
   }
 }

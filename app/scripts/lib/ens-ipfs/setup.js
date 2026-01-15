@@ -1,9 +1,11 @@
-import extension from 'extensionizer';
+import base32Encode from 'base32-encode';
+import base64 from 'base64-js';
+import browser from 'webextension-polyfill';
+
 import getFetchWithTimeout from '../../../../shared/modules/fetch-with-timeout';
-import { SECOND } from '../../../../shared/constants/time';
 import resolveEnsToIpfsContentId from './resolver';
 
-const fetchWithTimeout = getFetchWithTimeout(SECOND * 30);
+const fetchWithTimeout = getFetchWithTimeout();
 
 const supportedTopLevelDomains = ['eth'];
 
@@ -11,10 +13,11 @@ export default function setupEnsIpfsResolver({
   provider,
   getCurrentChainId,
   getIpfsGateway,
+  getUseAddressBarEnsResolution,
 }) {
   // install listener
   const urlPatterns = supportedTopLevelDomains.map((tld) => `*://*.${tld}/*`);
-  extension.webRequest.onErrorOccurred.addListener(webRequestDidFail, {
+  browser.webRequest.onErrorOccurred.addListener(webRequestDidFail, {
     urls: urlPatterns,
     types: ['main_frame'],
   });
@@ -23,7 +26,7 @@ export default function setupEnsIpfsResolver({
   return {
     // uninstall listener
     remove() {
-      extension.webRequest.onErrorOccurred.removeListener(webRequestDidFail);
+      browser.webRequest.onErrorOccurred.removeListener(webRequestDidFail);
     },
   };
 
@@ -31,7 +34,12 @@ export default function setupEnsIpfsResolver({
     const { tabId, url } = details;
     // ignore requests that are not associated with tabs
     // only attempt ENS resolution on mainnet
-    if (tabId === -1 || getCurrentChainId() !== '0x1') {
+    if (
+      (tabId === -1 || getCurrentChainId() !== '0x1') &&
+      // E2E tests use a chain other than 0x1, so for testing,
+      // allow the reuqest to pass through
+      !process.env.IN_TEST
+    ) {
       return;
     }
     // parse ens name
@@ -48,14 +56,38 @@ export default function setupEnsIpfsResolver({
 
   async function attemptResolve({ tabId, name, pathname, search, fragment }) {
     const ipfsGateway = getIpfsGateway();
-    extension.tabs.update(tabId, { url: `loading.html` });
-    let url = `https://app.ens.domains/name/${name}`;
+    const useAddressBarEnsResolution = getUseAddressBarEnsResolution();
+
+    const ensSiteUrl = `https://app.ens.domains/name/${name}`;
+
+    // We cannot show this if useAddressBarEnsResolution is off...
+    if (useAddressBarEnsResolution && ipfsGateway) {
+      await browser.tabs.update(tabId, { url: 'loading.html' });
+    }
+
+    let url = ensSiteUrl;
+
+    // If we're testing ENS domain resolution support,
+    // we assume the ENS domains URL
+    if (process.env.IN_TEST) {
+      if (useAddressBarEnsResolution || ipfsGateway) {
+        await browser.tabs.update(tabId, { url });
+      }
+      return;
+    }
+
     try {
       const { type, hash } = await resolveEnsToIpfsContentId({
         provider,
         name,
       });
       if (type === 'ipfs-ns' || type === 'ipns-ns') {
+        // If the ENS is via IPFS and that setting is disabled,
+        // Do not resolve the ENS
+        if (ipfsGateway === '') {
+          url = null;
+          return;
+        }
         const resolvedUrl = `https://${hash}.${type.slice(
           0,
           4,
@@ -81,11 +113,32 @@ export default function setupEnsIpfsResolver({
         url = `http://127.0.0.1:43110/${hash}${pathname}${search || ''}${
           fragment || ''
         }`;
+      } else if (type === 'skynet-ns') {
+        const padded = hash.padEnd(hash.length + 4 - (hash.length % 4), '=');
+        const decoded = base64.toByteArray(padded);
+
+        const options = { padding: false };
+        const base32EncodedSkylink = base32Encode(
+          decoded,
+          'RFC4648-HEX',
+          options,
+        ).toLowerCase();
+        url = `https://${base32EncodedSkylink}.siasky.net${pathname}${
+          search || ''
+        }${fragment || ''}`;
       }
     } catch (err) {
       console.warn(err);
     } finally {
-      extension.tabs.update(tabId, { url });
+      // Only forward to destination URL if a URL exists and
+      // useAddressBarEnsResolution is properly
+      if (
+        url &&
+        (useAddressBarEnsResolution ||
+          (!useAddressBarEnsResolution && url !== ensSiteUrl))
+      ) {
+        await browser.tabs.update(tabId, { url });
+      }
     }
   }
 }
